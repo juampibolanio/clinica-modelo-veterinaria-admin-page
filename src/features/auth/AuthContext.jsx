@@ -1,43 +1,43 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { bindAuth } from "../../libs/axios";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem('cmv_token') || null);
+  const [token, setToken] = useState(() => localStorage.getItem("cmv_token") || null);
   const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem('cmv_user');
+    const raw = localStorage.getItem("cmv_user");
     return raw ? JSON.parse(raw) : null;
   });
 
   const isAuthenticated = !!token;
 
   const login = async (payload) => {
-    // payload: { username, password }
     const url = `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`;
+
     const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.message || 'Credenciales inválidas');
+      throw new Error(err?.message || "Credenciales inválidas");
     }
 
     const data = await res.json();
 
-    // Intentamos soportar distintos nombres de campo para el token
     const accessToken = data.token || data.accessToken || data.jwt || data?.data?.token;
-    if (!accessToken) throw new Error('No se recibió el token JWT');
+    if (!accessToken) throw new Error("No se recibió el token JWT");
 
     setToken(accessToken);
-    localStorage.setItem('cmv_token', accessToken);
+    localStorage.setItem("cmv_token", accessToken);
 
     const u = data.user || data.profile || null;
     if (u) {
       setUser(u);
-      localStorage.setItem('cmv_user', JSON.stringify(u));
+      localStorage.setItem("cmv_user", JSON.stringify(u));
     }
 
     return data;
@@ -46,14 +46,20 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('cmv_token');
-    localStorage.removeItem('cmv_user');
+    localStorage.removeItem("cmv_token");
+    localStorage.removeItem("cmv_user");
+    sessionStorage.clear();
+    window.history.replaceState(null, "", "/login"); // limpia el historial actual
   };
 
-  // Optional: validar expiración si backend incluye exp en el token (via interceptor lo manejaremos)
-  useEffect(() => { }, [token]);
+  useEffect(() => {
+    bindAuth({ token, logout });
+  }, [token]);
 
-  const value = useMemo(() => ({ token, user, isAuthenticated, login, logout, setUser }), [token, user, isAuthenticated]);
+  const value = useMemo(
+    () => ({ token, user, isAuthenticated, login, logout, setUser }),
+    [token, user, isAuthenticated]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
