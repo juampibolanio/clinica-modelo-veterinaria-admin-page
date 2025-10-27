@@ -1,39 +1,41 @@
 import React, { useEffect, useState } from "react";
 import {
-    Box, TextField, Stack, InputAdornment, Button
+    Stack,
+    TextField,
+    InputAdornment,
+    Button,
+    useMediaQuery,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
-import dayjs from "dayjs";
 
-const BlogFilters = ({ onChange }) => {
-    const [keyword, setKeyword] = useState("");
-    const [fromDate, setFromDate] = useState("");
-    const [toDate, setToDate] = useState("");
+const BlogFilters = React.memo(({ onChange }) => {
+    const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+    const [filters, setFilters] = useState({ keyword: "", fromDate: "", toDate: "" });
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            onChange?.({ keyword, fromDate, toDate });
-        }, 400);
+        const timeout = setTimeout(() => onChange?.(filters), 350);
         return () => clearTimeout(timeout);
-    }, [keyword, fromDate, toDate]);
+    }, [filters]);
 
     const clearFilters = () => {
-        setKeyword("");
-        setFromDate("");
-        setToDate("");
-        onChange?.({});
+        const reset = { keyword: "", fromDate: "", toDate: "" };
+        setFilters(reset);
+        onChange?.(reset);
     };
 
     return (
         <Stack
-            direction={{ xs: "column", sm: "row" }}
+            direction={isSmall ? "column" : "row"}
             spacing={2}
-            alignItems="center"
+            alignItems={isSmall ? "stretch" : "center"}
+            sx={{ width: "100%" }}
         >
             <TextField
                 placeholder="Buscar por título o subtítulo..."
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
+                value={filters.keyword}
+                onChange={(e) => setFilters({ ...filters, keyword: e.target.value })}
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
@@ -42,26 +44,35 @@ const BlogFilters = ({ onChange }) => {
                     ),
                 }}
                 fullWidth
+                size="small"
             />
             <TextField
                 type="date"
                 label="Desde"
+                size="small"
                 InputLabelProps={{ shrink: true }}
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
+                value={filters.fromDate}
+                onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
             />
             <TextField
                 type="date"
                 label="Hasta"
+                size="small"
                 InputLabelProps={{ shrink: true }}
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
+                value={filters.toDate}
+                onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
             />
-            <Button color="secondary" variant="outlined" onClick={clearFilters}>
+            <Button
+                variant="outlined"
+                color="secondary"
+                onClick={clearFilters}
+                size="small"
+                fullWidth={isSmall}
+            >
                 Limpiar
             </Button>
         </Stack>
     );
-};
+});
 
 export default BlogFilters;

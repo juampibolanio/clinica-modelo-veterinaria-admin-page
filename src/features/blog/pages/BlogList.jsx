@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
     Box,
     Button,
@@ -17,51 +17,43 @@ import ConfirmDialog from "../../../components/common/ConfirmDialog";
 
 const BlogList = () => {
     const { enqueueSnackbar } = useSnackbar();
-
-    // 📊 Estado de datos y control
     const [posts, setPosts] = useState([]);
-    const [totalPages, setTotalPages] = useState(0);
-    const [totalElements, setTotalElements] = useState(0);
-    const [page, setPage] = useState(1); // MUI es 1-based, backend 0-based
+    const [page, setPage] = useState(1);
     const [filters, setFilters] = useState({});
     const [loading, setLoading] = useState(false);
-
     const [confirm, setConfirm] = useState({ open: false, id: null });
+    const [meta, setMeta] = useState({ totalPages: 0, totalElements: 0 });
 
-    // 📥 Cargar publicaciones del backend
-    const loadPosts = async () => {
+    const loadPosts = useCallback(async () => {
         try {
             setLoading(true);
             const res = await getAllPosts({ ...filters, page: page - 1, size: 10 });
             setPosts(res.content || []);
-            setTotalPages(res.totalPages);
-            setTotalElements(res.totalElements);
-        } catch (err) {
-            enqueueSnackbar("Error al cargar publicaciones", { variant: "error" }, err);
+            setMeta({ totalPages: res.totalPages, totalElements: res.totalElements });
+        } catch {
+            enqueueSnackbar("Error al cargar publicaciones", { variant: "error" });
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, filters]);
 
     useEffect(() => {
         loadPosts();
-    }, [page, filters]);
+    }, [loadPosts]);
 
-    // 🗑️ Eliminar publicación
     const handleDelete = async () => {
         try {
             await deletePost(confirm.id);
             enqueueSnackbar("Publicación eliminada", { variant: "success" });
             setConfirm({ open: false, id: null });
             loadPosts();
-        } catch (err) {
-            enqueueSnackbar("Error al eliminar", { variant: "error" }, err);
+        } catch {
+            enqueueSnackbar("Error al eliminar", { variant: "error" });
         }
     };
 
     return (
         <Stack spacing={3}>
-            {/* Header */}
             <Stack
                 direction={{ xs: "column", sm: "row" }}
                 alignItems={{ xs: "flex-start", sm: "center" }}
@@ -71,54 +63,40 @@ const BlogList = () => {
                 <Typography variant="h4" fontWeight={800}>
                     Publicaciones del Blog
                 </Typography>
-                <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    href="/blog/new"
-                >
+                <Button variant="contained" startIcon={<AddIcon />} href="/blog/new">
                     Nueva Publicación
                 </Button>
             </Stack>
 
-            {/* Filtros */}
             <BlogFilters onChange={setFilters} />
             <Divider />
 
-            {/* Tabla */}
             {loading ? (
-                <Box sx={{ textAlign: "center", py: 6 }}>
+                <Box textAlign="center" py={6}>
                     <CircularProgress />
                 </Box>
             ) : (
                 <BlogTable rows={posts} onDelete={(id) => setConfirm({ open: true, id })} />
             )}
 
-            {/* Paginación */}
-            {!loading && totalPages > 1 && (
+            {!loading && meta.totalPages > 1 && (
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
                     <Pagination
-                        count={totalPages}
+                        count={meta.totalPages}
                         page={page}
-                        onChange={(e, value) => setPage(value)}
+                        onChange={(e, val) => setPage(val)}
                         color="primary"
                         shape="rounded"
                     />
                 </Box>
             )}
 
-            {/* Contador total */}
             {!loading && (
-                <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    align="center"
-                    sx={{ mt: 1 }}
-                >
-                    {totalElements} publicaciones en total
+                <Typography variant="body2" color="text.secondary" align="center">
+                    {meta.totalElements} publicaciones en total
                 </Typography>
             )}
 
-            {/* Diálogo de confirmación */}
             <ConfirmDialog
                 open={confirm.open}
                 onClose={() => setConfirm({ open: false, id: null })}
@@ -130,4 +108,4 @@ const BlogList = () => {
     );
 };
 
-export default BlogList;
+export default React.memo(BlogList);

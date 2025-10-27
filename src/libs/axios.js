@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
   timeout: 15000,
 });
 
-// 🔐 Interceptor de request
+// Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
     if (authRef.token) {
@@ -25,7 +25,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// 🚨 Interceptor de respuesta
+// Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {

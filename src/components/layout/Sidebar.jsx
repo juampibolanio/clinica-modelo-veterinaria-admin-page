@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Typography, Divider, List } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -35,12 +34,12 @@ const Sidebar = ({ onClose }) => {
     logout();
     enqueueSnackbar("Sesión cerrada correctamente 👋", { variant: "info" });
     navigate("/login", { replace: true });
-    window.location.reload(); // fuerza limpieza total de la app
+    window.location.reload(); 
   };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* Encabezado */}
+      {/* Header */}
       <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
         <img src={logo} alt="Logo" width={32} height={32} />
         <Typography variant="h6" fontWeight={700}>
@@ -49,7 +48,7 @@ const Sidebar = ({ onClose }) => {
       </Box>
       <Divider />
 
-      {/* Navegación */}
+      {/* Navegation */}
       <List sx={{ flexGrow: 1 }}>
         {navItems.map((item) => (
           <NavItem key={item.path} {...item} onClick={onClose} />

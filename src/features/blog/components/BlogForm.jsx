@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
     Box,
     TextField,
@@ -32,15 +32,14 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
     const [images, setImages] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(0);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) =>
+        setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-    const handleAddImages = (e) => {
+    const handleAddImages = useCallback((e) => {
         const files = Array.from(e.target.files);
         e.target.value = null;
 
-        const validFiles = files.filter((file) => {
+        const valid = files.filter((file) => {
             if (!ALLOWED_TYPES.includes(file.type)) {
                 enqueueSnackbar(`Tipo no permitido: ${file.name}`, { variant: "warning" });
                 return false;
@@ -52,79 +51,55 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
             return true;
         });
 
-        if (images.length + validFiles.length > MAX_IMAGES) {
-            enqueueSnackbar(`Máximo ${MAX_IMAGES} imágenes permitidas`, { variant: "warning" });
+        if (images.length + valid.length > MAX_IMAGES) {
+            enqueueSnackbar(`Máximo ${MAX_IMAGES} imágenes`, { variant: "warning" });
             return;
         }
+        setImages((prev) => [...prev, ...valid]);
+    }, [images]);
 
-        setImages((prev) => [...prev, ...validFiles]);
-    };
-
-    const handleRemoveImage = (index) => {
+    const handleRemoveImage = (index) =>
         setImages((prev) => prev.filter((_, i) => i !== index));
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         if (!formData.title.trim() || !formData.content.trim()) {
-            enqueueSnackbar("El título y contenido son obligatorios", { variant: "warning" });
+            enqueueSnackbar("Título y contenido son obligatorios", { variant: "warning" });
             return;
         }
 
         try {
             const data = new FormData();
             data.append("post", new Blob([JSON.stringify(formData)], { type: "application/json" }));
-            images.forEach((file) => data.append("images", file));
-
+            images.forEach((f) => data.append("images", f));
             await onSubmit(data);
-            setUploadProgress(0);
-        } catch (error) {
+        } finally {
             setUploadProgress(0);
         }
     };
 
-    const handleCancel = () => {
-        navigate("/blog"); // 🔙 volver al listado de posts
-    };
-
     return (
-        <Box component="form" onSubmit={handleSubmit} noValidate>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: "100%" }}>
             <Stack spacing={3}>
-                <TextField
-                    label="Título"
-                    name="title"
-                    fullWidth
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                />
-                <TextField
-                    label="Subtítulo"
-                    name="subtitle"
-                    fullWidth
-                    value={formData.subtitle}
-                    onChange={handleChange}
-                />
+                <TextField label="Título" name="title" value={formData.title} onChange={handleChange} fullWidth required />
+                <TextField label="Subtítulo" name="subtitle" value={formData.subtitle} onChange={handleChange} fullWidth />
                 <TextField
                     label="Contenido"
                     name="content"
+                    value={formData.content}
+                    onChange={handleChange}
                     fullWidth
                     multiline
                     minRows={6}
-                    value={formData.content}
-                    onChange={handleChange}
                     required
                 />
 
                 {mode === "create" && (
-                    <Box>
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" mb={1}>
-                            <Typography variant="h6" fontWeight={700}>
-                                Imágenes del post
-                            </Typography>
+                    <>
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Typography variant="h6" fontWeight={700}>Imágenes</Typography>
                             <Typography variant="body2" color="text.secondary">
-                                {images.length} / {MAX_IMAGES}
+                                {images.length}/{MAX_IMAGES}
                             </Typography>
                         </Stack>
 
@@ -132,10 +107,9 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
                             variant="outlined"
                             startIcon={<AddPhotoAlternateIcon />}
                             onClick={() => fileRef.current?.click()}
-                            sx={{ mb: 2 }}
                             disabled={images.length >= MAX_IMAGES}
                         >
-                            {images.length >= MAX_IMAGES ? "Límite alcanzado" : "Seleccionar imágenes"}
+                            Agregar imágenes
                         </Button>
 
                         <input
@@ -147,71 +121,50 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
                             onChange={handleAddImages}
                         />
 
-                        {images.length > 0 && (
-                            <Grid container spacing={2}>
-                                {images.map((file, index) => (
-                                    <Grid item xs={12} sm={6} md={4} key={index}>
-                                        <Box sx={{ position: "relative" }}>
-                                            <img
-                                                src={URL.createObjectURL(file)}
-                                                alt={`preview-${index}`}
-                                                style={{
-                                                    width: "100%",
-                                                    height: 150,
-                                                    objectFit: "cover",
-                                                    borderRadius: 8,
-                                                }}
-                                            />
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleRemoveImage(index)}
-                                                sx={{
-                                                    position: "absolute",
-                                                    top: 8,
-                                                    right: 8,
-                                                    bgcolor: "error.main",
-                                                    color: "white",
-                                                    "&:hover": { bgcolor: "error.dark" },
-                                                }}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Box>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        )}
-                    </Box>
+                        <Grid container spacing={2}>
+                            {images.map((file, i) => (
+                                <Grid item xs={12} sm={6} md={4} key={i}>
+                                    <Box sx={{ position: "relative" }}>
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt=""
+                                            style={{
+                                                width: "100%",
+                                                height: 160,
+                                                objectFit: "cover",
+                                                borderRadius: 8,
+                                            }}
+                                        />
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => handleRemoveImage(i)}
+                                            sx={{
+                                                position: "absolute",
+                                                top: 8,
+                                                right: 8,
+                                                bgcolor: "error.main",
+                                                color: "#fff",
+                                                "&:hover": { bgcolor: "error.dark" },
+                                            }}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Box>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </>
                 )}
 
-                {uploadProgress > 0 && uploadProgress < 100 && (
-                    <Box sx={{ width: "100%", mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary" mb={0.5}>
-                            Subiendo imágenes... {uploadProgress}%
-                        </Typography>
-                        <LinearProgress variant="determinate" value={uploadProgress} />
-                    </Box>
+                {uploadProgress > 0 && (
+                    <LinearProgress variant="determinate" value={uploadProgress} sx={{ mt: 1 }} />
                 )}
 
-                {/* 🟢 Botones de acción */}
-                <Stack direction="row" spacing={2} mt={2}>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={submitting}
-                    >
-                        {submitting
-                            ? "Guardando..."
-                            : mode === "edit"
-                                ? "Guardar cambios"
-                                : "Crear publicación"}
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
+                    <Button type="submit" variant="contained" fullWidth={true} disabled={submitting}>
+                        {submitting ? "Guardando..." : mode === "edit" ? "Guardar cambios" : "Crear publicación"}
                     </Button>
-
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        onClick={handleCancel}
-                    >
+                    <Button variant="outlined" color="secondary" onClick={() => navigate("/blog")} fullWidth={true}>
                         Cancelar
                     </Button>
                 </Stack>
@@ -220,4 +173,4 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
     );
 };
 
-export default BlogForm;
+export default React.memo(BlogForm);

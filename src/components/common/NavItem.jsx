@@ -4,7 +4,6 @@ import { NavLink, useLocation } from "react-router-dom";
 const NavItem = ({ label, icon, path, onClick, color }) => {
     const location = useLocation();
 
-    // ✅ activo si es la ruta exacta o una subruta (por ejemplo /blog, /blog/new)
     const active = location.pathname === path || location.pathname.startsWith(`${path}/`);
 
     return (

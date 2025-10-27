@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Box, Drawer, IconButton, Toolbar, useMediaQuery } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
+import { Box, Drawer, Toolbar, useMediaQuery } from "@mui/material";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { Outlet } from "react-router-dom"; // ✅ Importante
+import { Outlet } from "react-router-dom"; 
 
 const drawerWidth = 240;
 
@@ -17,7 +16,7 @@ const DashboardLayout = () => {
         <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
             {/* Sidebar */}
             <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-                {/* Drawer móvil */}
+                {/* Mobile drawer */}
                 {!isDesktop && (
                     <Drawer
                         variant="temporary"
@@ -35,7 +34,7 @@ const DashboardLayout = () => {
                     </Drawer>
                 )}
 
-                {/* Drawer escritorio */}
+                {/* Drawer desktop */}
                 {isDesktop && (
                     <Drawer
                         variant="permanent"
@@ -54,11 +53,10 @@ const DashboardLayout = () => {
                 )}
             </Box>
 
-            {/* Contenido principal */}
+            {/* Main content */}
             <Box component="main" sx={{ flexGrow: 1, width: { md: `calc(100% - ${drawerWidth}px)` } }}>
                 <Topbar onMenuClick={handleDrawerToggle} />
                 <Toolbar />
-                {/* ✅ Outlet para renderizar las páginas anidadas */}
                 <Box sx={{ p: { xs: 2, md: 3 } }}>
                     <Outlet />
                 </Box>

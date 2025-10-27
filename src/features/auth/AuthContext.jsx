@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem("cmv_token");
     localStorage.removeItem("cmv_user");
     sessionStorage.clear();
-    window.history.replaceState(null, "", "/login"); // limpia el historial actual
+    window.history.replaceState(null, "", "/login");
   };
 
   useEffect(() => {
