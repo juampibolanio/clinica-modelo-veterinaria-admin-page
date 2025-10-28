@@ -1,0 +1,15 @@
+export const CONSULTATION_TYPES = [
+  "Control general",
+  "Vacunación",
+  "Desparasitacion",
+  "Cirugia",
+  "Urgencia",
+  "Post operatorio",
+  "Diagnóstico",
+  "Seguimiento",
+  "Nutrición",
+  "Dermatología",
+  "Odontología",
+  "Cardiología",
+  "Otros",
+];
