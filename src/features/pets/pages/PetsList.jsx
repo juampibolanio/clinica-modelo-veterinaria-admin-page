@@ -203,14 +203,6 @@ const PetsList = () => {
                         </Select>
                     </FormControl>
 
-                    <TextField
-                        label="ID del Dueño"
-                        size="small"
-                        value={filters.ownerId}
-                        onChange={(e) => setFilters((f) => ({ ...f, ownerId: e.target.value }))}
-                        sx={{ width: 130 }}
-                    />
-
                     <IconButton onClick={fetchPets}>
                         <SearchIcon />
                     </IconButton>

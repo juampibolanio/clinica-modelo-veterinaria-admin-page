@@ -28,19 +28,28 @@ export const AuthProvider = ({ children }) => {
 
     const data = await res.json();
 
-    const accessToken = data.token || data.accessToken || data.jwt || data?.data?.token;
-    if (!accessToken) throw new Error("No se recibió el token JWT");
+    // 🔹 Guarda token JWT
+    const accessToken = data.token || data.jwt || data.accessToken;
+    if (!accessToken) throw new Error("No se recibió token JWT");
 
     setToken(accessToken);
     localStorage.setItem("cmv_token", accessToken);
 
-    const u = data.user || data.profile || null;
-    if (u) {
-      setUser(u);
-      localStorage.setItem("cmv_user", JSON.stringify(u));
-    }
+    // 🔹 Guarda los datos del usuario (según el JSON del backend)
+    const userData = {
+      id: data.id,
+      username: data.username,
+      name: data.name,
+      surname: data.surname,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      role: data.role,
+    };
 
-    return data;
+    setUser(userData);
+    localStorage.setItem("cmv_user", JSON.stringify(userData));
+
+    return userData;
   };
 
   const logout = () => {
@@ -64,5 +73,4 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

@@ -14,6 +14,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import PersonIcon from "@mui/icons-material/PersonRounded";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPetById } from "../api/pets.api";
+import { listClinicalHistory } from "../../clinical-history/api/clinical-history.api"; // ajustá el path
+import FeedIcon from "@mui/icons-material/FeedRounded";
 import { useSnackbar } from "notistack";
 import dayjs from "dayjs";
 
@@ -21,6 +23,9 @@ const PetDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
+
+    const [histories, setHistories] = useState({ content: [], number: 0, totalPages: 0 });
+    const [loadingHistories, setLoadingHistories] = useState(true);
 
     const [pet, setPet] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -37,8 +42,19 @@ const PetDetail = () => {
         }
     };
 
+    const fetchHistories = async () => {
+        try {
+            setLoadingHistories(true);
+            const data = await listClinicalHistory({ petId: id, page: 0, size: 5, sortBy: "date", direction: "desc" });
+            setHistories(data);
+        } finally {
+            setLoadingHistories(false);
+        }
+    };
+
     useEffect(() => {
         fetchPetData();
+        fetchHistories();
     }, [id]);
 
     const translateGender = (value) => {
@@ -203,6 +219,55 @@ const PetDetail = () => {
                     </Button>
                 </Stack>
             </Paper>
+
+            {/* Historias clínicas */}
+            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                    <FeedIcon />
+                    <Typography variant="h6" fontWeight={700}>Historias clínicas</Typography>
+                    <Button
+                        variant="contained"
+                        sx={{ ml: "auto" }}
+                        onClick={() => navigate(`/clinical-history/create?petId=${id}`)}
+                    >
+                        Nueva historia
+                    </Button>
+                </Stack>
+                <Divider sx={{ mb: 2 }} />
+
+                {loadingHistories && (
+                    <Box display="flex" justifyContent="center" alignItems="center" minHeight={100}>
+                        <CircularProgress />
+                    </Box>
+                )}
+
+                {!loadingHistories && histories?.content?.length === 0 && (
+                    <Typography color="text.secondary">No hay historias clínicas para esta mascota.</Typography>
+                )}
+
+                {!loadingHistories && histories?.content?.map((h) => (
+                    <Box key={h.id} sx={{ py: 1 }}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography sx={{ minWidth: 120 }}>
+                                {h.date ? dayjs(h.date).format("DD/MM/YYYY") : "-"}
+                            </Typography>
+                            <Typography sx={{ minWidth: 160, fontWeight: 700 }}>{h.consultationType}</Typography>
+                            <Typography flex={1}>{h.consultationReason}</Typography>
+                            <Button size="small" onClick={() => navigate(`/clinical-history/${h.id}`)}>Ver</Button>
+                        </Stack>
+                        <Divider sx={{ mt: 1 }} />
+                    </Box>
+                ))}
+
+                {histories && histories.totalPages > 1 && (
+                    <Stack alignItems="flex-end" mt={2}>
+                        <Button size="small" onClick={() => navigate(`/clinical-history?petId=${id}`)}>
+                            Ver todas
+                        </Button>
+                    </Stack>
+                )}
+            </Paper>
+
         </Stack>
     );
 };
