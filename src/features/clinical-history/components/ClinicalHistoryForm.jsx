@@ -9,13 +9,15 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import { CONSULTATION_TYPES } from "../constants/consultation-types";
+import { COMMON_DIAGNOSES } from "../constants/common-diagnoses"; // ✅ nuevo import
 import { getAllUsers } from "../../users/api/users.api";
-import { useAuth } from "../../auth/AuthContext"; // tu contexto de autenticación
+import { useAuth } from "../../auth/AuthContext";
 
 const empty = {
     consultationType: "",
     consultationReason: "",
     diagnosis: "",
+    customDiagnosis: "", // ✅ nuevo
     treatment: "",
     date: dayjs().format("YYYY-MM-DD"),
     observations: "",
@@ -27,9 +29,8 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
     const [form, setForm] = useState(empty);
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
-    const { user } = useAuth(); // usuario logueado
+    const { user } = useAuth();
 
-    // 🔹 Traer todos los usuarios (veterinarios)
     useEffect(() => {
         const fetchUsers = async () => {
             try {
@@ -43,14 +44,13 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         fetchUsers();
     }, []);
 
-    // 🔹 Inicializar formulario
     useEffect(() => {
         setForm((prev) => ({
             ...prev,
             ...(initialValues || {}),
             veterinarianId:
                 initialValues?.veterinarianId ||
-                user?.id || // si viene logueado, se autocompleta
+                user?.id ||
                 "",
         }));
     }, [initialValues, user]);
@@ -72,12 +72,22 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit?.(form);
+        const payload = {
+            ...form,
+            // ✅ si el diagnóstico es "Otro", usar el campo customDiagnosis
+            diagnosis:
+                form.diagnosis === "Otro"
+                    ? form.customDiagnosis
+                    : form.diagnosis,
+        };
+        delete payload.customDiagnosis;
+        onSubmit?.(payload);
     };
 
     return (
         <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
+
                 {/* Tipo de consulta */}
                 <Grid item xs={12} md={4}>
                     <TextField
@@ -90,9 +100,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                         required
                     >
                         {CONSULTATION_TYPES.map((t) => (
-                            <MenuItem key={t} value={t}>
-                                {t}
-                            </MenuItem>
+                            <MenuItem key={t} value={t}>{t}</MenuItem>
                         ))}
                     </TextField>
                 </Grid>
@@ -123,18 +131,38 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* Diagnóstico y tratamiento */}
+                {/* Diagnóstico */}
                 <Grid item xs={12} md={6}>
                     <TextField
+                        select
                         label="Diagnóstico"
                         name="diagnosis"
                         fullWidth
                         value={form.diagnosis || ""}
                         onChange={handleChange}
-                        multiline
-                        minRows={2}
-                    />
+                    >
+                        {COMMON_DIAGNOSES.map((d) => (
+                            <MenuItem key={d} value={d}>{d}</MenuItem>
+                        ))}
+                        <MenuItem value="Otro">Otro...</MenuItem>
+                    </TextField>
                 </Grid>
+
+                {/* Campo personalizado si seleccionó “Otro” */}
+                {form.diagnosis === "Otro" && (
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            label="Especificar diagnóstico"
+                            name="customDiagnosis"
+                            fullWidth
+                            value={form.customDiagnosis || ""}
+                            onChange={handleChange}
+                            required
+                        />
+                    </Grid>
+                )}
+
+                {/* Tratamiento */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="Tratamiento"
@@ -203,7 +231,11 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                 {/* Botón guardar */}
                 <Grid item xs={12}>
                     <Stack direction="row" justifyContent="flex-end">
-                        <Button type="submit" variant="contained" disabled={!canSubmit || saving}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={!canSubmit || saving}
+                        >
                             {saving ? "Guardando..." : "Guardar"}
                         </Button>
                     </Stack>
