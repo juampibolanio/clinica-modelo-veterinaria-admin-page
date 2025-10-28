@@ -1,0 +1,67 @@
+export const PRODUCT_TYPES = [
+  // 💉 Medicamentos y vacunas
+  "Vacuna",
+  "Antibiótico",
+  "Antiparasitario interno",
+  "Antiparasitario externo",
+  "Analgésico",
+  "Antiinflamatorio",
+  "Antihistamínico",
+  "Anestésico",
+  "Corticoide",
+  "Antifúngico",
+  "Antiviral",
+  "Suplemento vitamínico",
+  "Mineral",
+  "Probiótico",
+  "Desinfectante",
+  "Antiséptico",
+
+  // 🐾 Higiene y cuidado
+  "Shampoo",
+  "Acondicionador",
+  "Colonia",
+  "Pipeta antipulgas",
+  "Cepillo dental",
+  "Cortaúñas",
+  "Toallitas húmedas",
+  "Limpiador ótico",
+  "Desodorante para mascotas",
+
+  // 🥣 Alimentación
+  "Alimento seco",
+  "Alimento húmedo",
+  "Snack",
+  "Suplemento alimenticio",
+  "Dietético especial",
+  "Alimento terapéutico",
+
+  // 🏥 Insumos clínicos
+  "Jeringa",
+  "Guantes",
+  "Gasas",
+  "Vendas",
+  "Algodón",
+  "Termómetro",
+  "Alcohol",
+  "Desinfectante de superficies",
+  "Tijeras",
+  "Pinzas",
+  "Catéter",
+  "Agujas",
+  "Tubo de ensayo",
+
+  // 🎀 Accesorios y otros
+  "Collar",
+  "Correa",
+  "Transportadora",
+  "Bozal",
+  "Ropa",
+  "Juguete",
+  "Cama",
+  "Comedero",
+  "Bebedero",
+  "Accesorio de entrenamiento",
+  "Peine",
+  "Chaleco reflectante"
+];
