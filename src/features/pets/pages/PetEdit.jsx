@@ -5,10 +5,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import PetForm from "../components/PetForm";
 import { getPetById, patchPet } from "../api/pets.api";
 
+/**
+ * PetEdit
+ * Página para editar los datos de una mascota existente.
+ */
 const PetEdit = () => {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
     const { id } = useParams();
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [pet, setPet] = useState(null);
@@ -26,7 +31,7 @@ const PetEdit = () => {
             }
         };
         fetchPet();
-    }, [id, navigate]);
+    }, [id, navigate, enqueueSnackbar]);
 
     const handleSubmit = async (formData) => {
         try {
@@ -34,9 +39,8 @@ const PetEdit = () => {
             await patchPet(id, formData);
             enqueueSnackbar("Mascota actualizada correctamente", { variant: "success" });
             navigate(`/pets/${id}`);
-        } catch (err) {
-            console.error(err);
-            enqueueSnackbar("Error al actualizar mascota", { variant: "error" });
+        } catch {
+            enqueueSnackbar("Error al actualizar la mascota", { variant: "error" });
         } finally {
             setSaving(false);
         }
@@ -53,20 +57,21 @@ const PetEdit = () => {
     if (!pet) return null;
 
     return (
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 } }}>
             <Typography variant="h4" fontWeight={800}>
                 Editar mascota
             </Typography>
+
             <PetForm
                 onSubmit={handleSubmit}
                 submitting={saving}
+                mode="edit"
                 defaultValues={{
                     ...pet,
-                    birthDate: pet?.birthDate ? String(pet.birthDate).slice(0, 10) : "",
+                    // Si el backend devuelve un timestamp o ISO string, recortamos a YYYY-MM-DD
+                    birthDate: pet.birthDate ? String(pet.birthDate).slice(0, 10) : "",
                 }}
-                mode="edit"
             />
-
         </Stack>
     );
 };

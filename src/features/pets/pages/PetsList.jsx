@@ -1,81 +1,43 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useMemo } from "react";
 import {
     Box,
     Stack,
     Typography,
     TextField,
     IconButton,
+    Tooltip,
     Button,
     Divider,
-    Tooltip,
-    MenuItem,
-    Select,
     FormControl,
     InputLabel,
+    Select,
+    MenuItem,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
-import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
+import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
+import AddIcon from "@mui/icons-material/Pets";
 import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
-import { getPets, deletePet } from "../api/pets.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import { usePetsList } from "../hooks/usePetsList";
 
 const PetsList = () => {
     const navigate = useNavigate();
-    const { enqueueSnackbar } = useSnackbar();
-    const [rows, setRows] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({
-        name: "",
-        species: "",
-        breed: "",
-        gender: "",
-        ownerId: "",
-    });
-    const debounceRef = useRef(null);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [selectedPet, setSelectedPet] = useState(null);
-
-    const fetchPets = async () => {
-        try {
-            setLoading(true);
-            const result = await getPets(filters);
-            setRows(result.content || []);
-        } catch {
-            enqueueSnackbar("Error al cargar mascotas", { variant: "error" });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-            fetchPets();
-        }, 400);
-        return () => clearTimeout(debounceRef.current);
-    }, [filters]);
-
-    const handleDeleteClick = (pet) => {
-        setSelectedPet(pet);
-        setConfirmOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!selectedPet) return;
-        try {
-            await deletePet(selectedPet.id);
-            enqueueSnackbar("Mascota eliminada correctamente", { variant: "success" });
-            fetchPets();
-        } catch {
-            enqueueSnackbar("Error al eliminar mascota", { variant: "error" });
-        } finally {
-            setConfirmOpen(false);
-        }
-    };
+    const {
+        rows,
+        loading,
+        filters,
+        setFilters,
+        confirmOpen,
+        setConfirmOpen,
+        selectedPet,
+        setSelectedPet,
+        handleConfirmDelete,
+        handleDeleteClick,
+        fetchPets,
+    } = usePetsList();
 
     const columns = useMemo(
         () => [
@@ -87,12 +49,12 @@ const PetsList = () => {
                 field: "gender",
                 headerName: "Género",
                 flex: 1,
-                renderCell: (params) => {
-                    const value = params?.row?.gender;
-                    if (value === "MALE") return "Macho";
-                    if (value === "FEMALE") return "Hembra";
-                    return "-";
-                },
+                renderCell: (params) =>
+                    params.row.gender === "MALE"
+                        ? "Macho"
+                        : params.row.gender === "FEMALE"
+                            ? "Hembra"
+                            : "-",
             },
             { field: "weight", headerName: "Peso (kg)", flex: 1 },
             {
@@ -114,7 +76,7 @@ const PetsList = () => {
                 field: "actions",
                 headerName: "Acciones",
                 sortable: false,
-                width: 180,
+                width: 160,
                 renderCell: (params) => (
                     <Stack direction="row" spacing={1}>
                         <Tooltip title="Ver detalle">
@@ -153,16 +115,26 @@ const PetsList = () => {
 
     return (
         <>
-            <Stack spacing={2}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
+                {/* Header */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "stretch", sm: "center" }}
+                    spacing={1}
+                >
                     <Typography variant="h4" fontWeight={800}>
                         Mascotas
                     </Typography>
-
                 </Stack>
 
-                {/* Filtros */}
-                <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                {/* Filters */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    flexWrap="wrap"
+                    alignItems="center"
+                >
                     <TextField
                         label="Nombre"
                         size="small"
@@ -210,8 +182,8 @@ const PetsList = () => {
 
                 <Divider />
 
-                {/* Tabla */}
-                <Box sx={{ height: 560, width: "100%" }}>
+                {/* Table */}
+                <Box sx={{ height: { xs: 400, sm: 560 }, width: "100%" }}>
                     <DataGrid
                         rows={rows}
                         columns={columns}
@@ -229,10 +201,10 @@ const PetsList = () => {
                 </Box>
             </Stack>
 
-            {/* ConfirmDialog */}
+            {/* Confirm dialog */}
             <ConfirmDialog
                 open={confirmOpen}
-                title="Eliminar Mascota"
+                title="Eliminar mascota"
                 message={
                     selectedPet
                         ? `¿Seguro que deseas eliminar a ${selectedPet.name}?`
