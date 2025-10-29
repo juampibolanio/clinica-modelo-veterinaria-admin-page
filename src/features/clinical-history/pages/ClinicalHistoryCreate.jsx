@@ -5,8 +5,12 @@ import { useSnackbar } from "notistack";
 import ClinicalHistoryForm from "../components/ClinicalHistoryForm";
 import { createClinicalHistory } from "../api/clinical-history.api";
 import { CONSULTATION_TYPES } from "../constants/consultation-types";
-import { getProductById, patchProduct } from "../../products/api/products.api"; // 🆕 import necesarios
+import { getProductById, patchProduct } from "../../products/api/products.api";
 
+/**
+ * ClinicalHistoryCreate
+ * Handles creation of new clinical history and updates used product stock.
+ */
 const ClinicalHistoryCreate = () => {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
@@ -18,16 +22,16 @@ const ClinicalHistoryCreate = () => {
         try {
             setSaving(true);
 
-            // 🔹 Armamos el payload final
+            // 🔹 Build final payload
             const payload = {
                 ...form,
                 petId: form.petId || Number(presetPetId) || undefined,
             };
 
-            // 1️⃣ Crear la historia clínica
+            // Create clinical history
             const created = await createClinicalHistory(payload);
 
-            // 2️⃣ Descontar stock de productos utilizados (si existen)
+            // Decrease stock for used products (if any)
             if (payload.usedProductIds?.length) {
                 for (const id of payload.usedProductIds) {
                     try {
@@ -51,7 +55,7 @@ const ClinicalHistoryCreate = () => {
 
             enqueueSnackbar("Historia clínica creada correctamente", { variant: "success" });
 
-            // 3️⃣ Redirigir: si venís desde una mascota, volver a su detalle
+            // Redirect: back to pet detail if came from one
             if (presetPetId) navigate(`/pets/${presetPetId}`);
             else navigate("/clinical-history");
         } catch (err) {
@@ -67,6 +71,7 @@ const ClinicalHistoryCreate = () => {
             <Typography variant="h4" fontWeight={800}>
                 Nueva historia clínica
             </Typography>
+
             <ClinicalHistoryForm
                 initialValues={{
                     petId: presetPetId ? Number(presetPetId) : "",

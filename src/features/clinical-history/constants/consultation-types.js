@@ -1,3 +1,8 @@
+/**
+ * Consultation types for clinical history records.
+ * Used to categorize the nature of veterinary consultations.
+ */
+
 export const CONSULTATION_TYPES = [
   "Control general",
   "Vacunación",

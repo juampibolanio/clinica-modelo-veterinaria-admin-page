@@ -15,7 +15,10 @@ import { getAllUsers } from "../../users/api/users.api";
 import { getProducts } from "../../products/api/products.api";
 import { useAuth } from "../../auth/hooks/useAuth";
 
-const empty = {
+/**
+ * Default form structure
+ */
+const emptyForm = {
     consultationType: "",
     consultationReason: "",
     diagnosis: "",
@@ -25,18 +28,25 @@ const empty = {
     observations: "",
     veterinarianId: "",
     petId: "",
-    usedProductIds: [], // 🆕 productos usados
+    usedProductIds: [],
 };
 
+/**
+ * ClinicalHistoryForm
+ * Manages creation and edition of clinical histories with validation and product linking.
+ */
 const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
-    const [form, setForm] = useState(empty);
+    const [form, setForm] = useState(emptyForm);
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [loadingProducts, setLoadingProducts] = useState(false);
+
     const { user } = useAuth();
 
-    // 🔹 Cargar veterinarios y productos
+    // ==============================
+    // Load veterinarians and products
+    // ==============================
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -48,8 +58,8 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     getProducts(),
                 ]);
 
-                setUsers(usersRes);
-                setProducts(productsRes.content || productsRes);
+                setUsers(usersRes || []);
+                setProducts(productsRes?.content || productsRes || []);
             } finally {
                 setLoadingUsers(false);
                 setLoadingProducts(false);
@@ -58,17 +68,20 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         fetchData();
     }, []);
 
-    // 🔹 Setear valores iniciales
+    // ==============================
+    // Set initial values
+    // ==============================
     useEffect(() => {
         setForm((prev) => ({
             ...prev,
             ...(initialValues || {}),
-            veterinarianId:
-                initialValues?.veterinarianId || user?.id || "",
+            veterinarianId: initialValues?.veterinarianId || user?.id || "",
         }));
     }, [initialValues, user]);
 
-    // 🔹 Validación
+    // ==============================
+    // Validation logic
+    // ==============================
     const canSubmit = useMemo(() => {
         return (
             form.consultationType &&
@@ -79,12 +92,15 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         );
     }, [form]);
 
+    // ==============================
+    // Handlers
+    // ==============================
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((f) => ({ ...f, [name]: value }));
     };
 
-    // 🆕 Manejar selección múltiple de productos
+    // Handle multiple product selection
     const handleProductSelect = (e) => {
         const value = e.target.value;
         setForm((f) => ({
@@ -98,18 +114,19 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         const payload = {
             ...form,
             diagnosis:
-                form.diagnosis === "Otro"
-                    ? form.customDiagnosis
-                    : form.diagnosis,
+                form.diagnosis === "Otro" ? form.customDiagnosis : form.diagnosis,
         };
         delete payload.customDiagnosis;
         onSubmit?.(payload);
     };
 
+    // ==============================
+    // UI
+    // ==============================
     return (
         <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
-                {/* Tipo de consulta */}
+                {/*  Consultation Type  */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         select
@@ -128,7 +145,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     </TextField>
                 </Grid>
 
-                {/* Motivo */}
+                {/* Consultation Reason  */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         label="Motivo de consulta"
@@ -140,7 +157,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* Fecha */}
+                {/* Date */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         type="date"
@@ -154,7 +171,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* Diagnóstico */}
+                {/* Diagnosis */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         select
@@ -173,7 +190,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     </TextField>
                 </Grid>
 
-                {/* Diagnóstico personalizado */}
+                {/* Custom Diagnosis */}
                 {form.diagnosis === "Otro" && (
                     <Grid item xs={12} md={6}>
                         <TextField
@@ -187,7 +204,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     </Grid>
                 )}
 
-                {/* Tratamiento */}
+                {/* Treatment */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="Tratamiento"
@@ -200,7 +217,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* 🆕 Productos utilizados */}
+                {/* Used Products */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         select
@@ -236,7 +253,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     </TextField>
                 </Grid>
 
-                {/* Observaciones */}
+                {/* Observations */}
                 <Grid item xs={12}>
                     <TextField
                         label="Observaciones"
@@ -249,7 +266,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* Veterinario */}
+                {/* Veterinarian */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         select
@@ -275,7 +292,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     </TextField>
                 </Grid>
 
-                {/* Mascota */}
+                {/* Pet ID */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="ID Mascota"
@@ -289,10 +306,14 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* Guardar / Cancelar */}
+                {/* Buttons */}
                 <Grid item xs={12}>
                     <Stack direction="row" justifyContent="flex-end" spacing={2}>
-                        <Button variant="outlined" color="secondary" onClick={() => window.history.back()}>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() => window.history.back()}
+                        >
                             Cancelar
                         </Button>
                         <Button
@@ -304,7 +325,6 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
                         </Button>
                     </Stack>
                 </Grid>
-
             </Grid>
         </form>
     );

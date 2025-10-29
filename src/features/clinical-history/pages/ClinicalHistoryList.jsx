@@ -25,11 +25,18 @@ import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import { listClinicalHistory, deleteClinicalHistory } from "../api/clinical-history.api";
 import { CONSULTATION_TYPES } from "../constants/consultation-types";
 
+/**
+ * ClinicalHistoryList
+ * Displays a searchable, paginated list of all clinical histories.
+ * Allows filtering by consultation type, date range, and keyword.
+ */
 const ClinicalHistoryList = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
+
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
+
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
 
@@ -42,36 +49,37 @@ const ClinicalHistoryList = () => {
 
     const debounceRef = useRef(null);
 
+    // ==============================
+    // Data Fetcher
+    // ==============================
     const fetchData = async () => {
         try {
             setLoading(true);
             const data = await listClinicalHistory({ ...filters, page: 0, size: 100 });
-            console.log("👉 Data del backend:", data);
-
-            // 🔸 Si existe .content y es un array, usarlo
-            if (data?.content && Array.isArray(data.content)) {
+            if (Array.isArray(data?.content)) {
                 setRows(data.content);
             } else {
                 setRows([]);
             }
         } catch (err) {
-            console.error("Error al cargar historias:", err);
+            console.error("Error loading clinical histories:", err);
             enqueueSnackbar("Error al cargar historias clínicas", { variant: "error" });
         } finally {
             setLoading(false);
         }
     };
 
+    // Auto-refresh on filter changes with debounce
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-            fetchData();
-        }, 400);
+        debounceRef.current = setTimeout(fetchData, 400);
         return () => clearTimeout(debounceRef.current);
         // eslint-disable-next-line
     }, [filters]);
 
-    // 🔹 Eliminar historia
+    // ==============================
+    // Delete handlers
+    // ==============================
     const handleAskDelete = (row) => {
         setSelectedItem(row);
         setConfirmOpen(true);
@@ -89,7 +97,9 @@ const ClinicalHistoryList = () => {
         }
     };
 
-    // 🔹 Columnas DataGrid
+    // ==============================
+    // Columns for DataGrid
+    // ==============================
     const columns = useMemo(
         () => [
             {
@@ -165,20 +175,32 @@ const ClinicalHistoryList = () => {
         [navigate]
     );
 
-
-
+    // ==============================
+    // UI
+    // ==============================
     return (
         <>
-            <Stack spacing={2}>
-                {/* Header */}
-                <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
+                {/* === Header === */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "stretch", sm: "center" }}
+                    spacing={1}
+                >
                     <Typography variant="h4" fontWeight={800}>
                         Historias Clínicas
                     </Typography>
+
                 </Stack>
 
-                {/* Filtros */}
-                <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+                {/* === Filters === */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1}
+                    flexWrap="wrap"
+                    alignItems="center"
+                >
                     <FormControl size="small" sx={{ minWidth: 160 }}>
                         <InputLabel>Tipo</InputLabel>
                         <Select
@@ -230,7 +252,7 @@ const ClinicalHistoryList = () => {
 
                 <Divider />
 
-                {/* Tabla */}
+                {/* === Table === */}
                 <Box sx={{ height: 560, width: "100%" }}>
                     <DataGrid
                         rows={rows}
@@ -249,7 +271,7 @@ const ClinicalHistoryList = () => {
                 </Box>
             </Stack>
 
-            {/* ConfirmDialog */}
+            {/* === Confirm Dialog === */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar historia clínica"
