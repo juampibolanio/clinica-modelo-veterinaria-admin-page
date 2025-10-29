@@ -12,6 +12,7 @@ import { getAllUsers } from "../../users/api/users.api";
 import { getProducts } from "../../products/api/products.api";
 import { listClinicalHistory } from "../../clinical-history/api/clinical-history.api";
 import { useAuth } from "../../auth/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const empty = {
     petId: "",
@@ -24,6 +25,7 @@ const empty = {
 
 const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [form, setForm] = useState(empty);
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
@@ -48,8 +50,17 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                     getProducts(),
                     listClinicalHistory({ petId }),
                 ]);
+
+                // 🔹 Solo productos categoría "Vacunas"
+                const allProducts = productsRes.content || productsRes;
+                const vaccineProducts = allProducts.filter(
+                    (p) =>
+                        p.categoryName &&
+                        p.categoryName.toLowerCase().includes("vacuna")
+                );
+
                 setUsers(usersRes);
-                setProducts(productsRes.content || productsRes);
+                setProducts(vaccineProducts);
                 setHistories(historiesRes.content || historiesRes);
             } finally {
                 setLoading(false);
@@ -97,11 +108,17 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                         required
                         disabled={loading}
                     >
-                        {products.map((p) => (
-                            <MenuItem key={p.id} value={p.id}>
-                                {p.name}
+                        {products.length === 0 ? (
+                            <MenuItem disabled>
+                                No hay productos de categoría “Vacunas”
                             </MenuItem>
-                        ))}
+                        ) : (
+                            products.map((p) => (
+                                <MenuItem key={p.id} value={p.id}>
+                                    {p.name} — Stock: {p.stock}
+                                </MenuItem>
+                            ))
+                        )}
                     </TextField>
                 </Grid>
 
@@ -158,15 +175,32 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                     />
                 </Grid>
 
-                {/* Botón guardar */}
+                {/* ✅ Botones Guardar / Cancelar */}
                 <Grid item xs={12}>
-                    <Stack direction="row" justifyContent="flex-end">
-                        <Button type="submit" variant="contained" disabled={saving}>
+                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() => navigate(-1)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={saving}
+                        >
                             {saving ? "Guardando..." : "Guardar"}
                         </Button>
                     </Stack>
                 </Grid>
             </Grid>
+
+            {loading && (
+                <Stack direction="row" justifyContent="center" mt={2}>
+                    <CircularProgress size={28} />
+                </Stack>
+            )}
         </form>
     );
 };
