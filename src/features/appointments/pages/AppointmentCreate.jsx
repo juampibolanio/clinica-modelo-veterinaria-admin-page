@@ -1,33 +1,40 @@
-import { useMemo, useState } from "react";
-import { Stack, Typography } from "@mui/material";
+import { useState, useMemo } from "react";
+import { Stack, Typography, CircularProgress } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import AppointmentForm from "../components/AppointmentForm";
 import { createAppointment } from "../api/appointments.api";
 
+/**
+ * Page: Create Appointment
+ * Handles creation of new appointments, including pre-filled date/time.
+ */
 const AppointmentCreate = () => {
-    const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
+    const { enqueueSnackbar } = useSnackbar();
     const [saving, setSaving] = useState(false);
     const [searchParams] = useSearchParams();
 
-    const initial = useMemo(() => {
+    // Preload date/time from URL if present
+    const initialValues = useMemo(() => {
         const date = searchParams.get("date");
         const time = searchParams.get("time");
         return {
-            date: date || undefined,
-            time: time || undefined,
+            date: date || "",
+            time: time || "",
+            status: "PENDING",
         };
     }, [searchParams]);
 
-    const handleSubmit = async (payload) => {
+    const handleSubmit = async (formData) => {
         try {
             setSaving(true);
-            await createAppointment(payload);
-            enqueueSnackbar("Turno creado", { variant: "success" });
+            await createAppointment(formData);
+            enqueueSnackbar("Turno creado correctamente ✅", { variant: "success" });
             navigate("/appointments");
-        } catch {
-            enqueueSnackbar("No se pudo crear el turno", { variant: "error" });
+        } catch (error) {
+            console.error("Error al crear turno:", error);
+            enqueueSnackbar("Error al crear el turno", { variant: "error" });
         } finally {
             setSaving(false);
         }
@@ -35,8 +42,21 @@ const AppointmentCreate = () => {
 
     return (
         <Stack spacing={2}>
-            <Typography variant="h4" fontWeight={800}>Nuevo turno</Typography>
-            <AppointmentForm initialValues={initial} onSubmit={handleSubmit} saving={saving} />
+            <Typography variant="h4" fontWeight={800}>
+                Nuevo turno
+            </Typography>
+
+            {saving && (
+                <Stack alignItems="center" justifyContent="center" mt={2}>
+                    <CircularProgress size={26} />
+                </Stack>
+            )}
+
+            <AppointmentForm
+                initialValues={initialValues}
+                onSubmit={handleSubmit}
+                saving={saving}
+            />
         </Stack>
     );
 };

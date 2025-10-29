@@ -1,17 +1,23 @@
 import {
-    TextField,
     Stack,
+    TextField,
     MenuItem,
     Button,
     CircularProgress,
+    Grid,
 } from "@mui/material";
-import { useEffect, useState } from "react";
-import dayjs from "dayjs";
-import { getOwners } from "../../owners/api/owners.api";
-import { getAllUsers } from "../../users/api/users.api";
-import { getPetsByOwnerId, getPetById } from "../../pets/api/pets.api";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { appointmentSchema } from "../schemas/appointment.schema.js";
+import { useAppointmentFormData } from "../hooks/useAppointmentFormData.js";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import { useEffect, useMemo } from "react";
 
+/**
+ * Appointment form for creating and editing appointments.
+ * Fully responsive, validated with Zod + React Hook Form.
+ */
 const STATUS_OPTIONS = [
     { label: "Pendiente", value: "PENDING" },
     { label: "Confirmado", value: "CONFIRMED" },
@@ -21,77 +27,69 @@ const STATUS_OPTIONS = [
 
 const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
     const navigate = useNavigate();
-    const [form, setForm] = useState({
-        date: "",
-        time: "",
-        status: "PENDING",
-        veterinarianId: "",
-        ownerId: "",
-        petId: "",
-        reason: "",
-        notes: "",
-        ...initialValues,
+    const { owners, vets, pets, setPets, loadingPreset } =
+        useAppointmentFormData(initialValues);
+
+    // Normalize numeric IDs to strings before initializing form
+    const normalizedInitialValues = useMemo(
+        () => ({
+            ...initialValues,
+            veterinarianId: initialValues.veterinarianId
+                ? String(initialValues.veterinarianId)
+                : "",
+            ownerId: initialValues.ownerId ? String(initialValues.ownerId) : "",
+            petId: initialValues.petId ? String(initialValues.petId) : "",
+        }),
+        [initialValues]
+    );
+
+    // Initialize React Hook Form with Zod validation
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors, isValid },
+    } = useForm({
+        resolver: zodResolver(appointmentSchema),
+        mode: "onChange",
+        defaultValues: {
+            date: "",
+            time: "",
+            status: "PENDING",
+            veterinarianId: "",
+            ownerId: "",
+            petId: "",
+            reason: "",
+            notes: "",
+            ...normalizedInitialValues,
+        },
     });
 
-    const [owners, setOwners] = useState([]);
-    const [vets, setVets] = useState([]);
-    const [pets, setPets] = useState([]);
-    const [loadingPetPreset, setLoadingPetPreset] = useState(false);
+    const ownerId = watch("ownerId");
 
-    // 🔹 Detectar si viene un petId precargado
+    // 🔹 Update pet list dynamically when owner changes
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const petId = params.get("petId");
-        if (petId) {
-            setLoadingPetPreset(true);
+        if (ownerId) {
             (async () => {
-                try {
-                    const pet = await getPetById(petId);
-                    setForm((prev) => ({
-                        ...prev,
-                        petId: pet.id,
-                        ownerId: pet.ownerId,
-                    }));
-                    const petList = await getPetsByOwnerId(pet.ownerId);
-                    setPets(petList);
-                } finally {
-                    setLoadingPetPreset(false);
-                }
+                const list = await import("../../pets/api/pets.api").then((m) =>
+                    m.getPetsByOwnerId(ownerId)
+                );
+                const mapped = (list || []).map((p) => ({
+                    ...p,
+                    id: String(p.id),
+                }));
+                setPets(mapped);
             })();
         }
-    }, []);
+    }, [ownerId, setPets]);
 
-    useEffect(() => {
-        (async () => {
-            const [ownersData, vetsData] = await Promise.all([
-                getOwners(),
-                getAllUsers(),
-            ]);
-            setOwners(ownersData?.content || ownersData);
-            setVets(vetsData?.content || vetsData);
-        })();
-    }, []);
-
-    useEffect(() => {
-        if (form.ownerId) {
-            (async () => {
-                const data = await getPetsByOwnerId(form.ownerId);
-                setPets(data);
-            })();
-        }
-    }, [form.ownerId]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm({ ...form, [name]: value });
+    // 🔹 Form submit handler
+    const handleFormSubmit = (data) => {
+        onSubmit?.(data);
     };
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit(form);
-    };
-
-    if (loadingPetPreset)
+    if (loadingPreset)
         return (
             <Stack alignItems="center" mt={4}>
                 <CircularProgress />
@@ -99,130 +97,175 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
         );
 
     return (
-        <form onSubmit={handleSubmit}>
-            <Stack spacing={2} direction="row" flexWrap="wrap" useFlexGap>
-                <TextField
-                    label="Fecha"
-                    type="date"
-                    name="date"
-                    value={form.date || ""}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                    inputProps={{ min: dayjs().format("YYYY-MM-DD") }}
-                    required
-                />
+        <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+            <Grid container spacing={2}>
+                {/* Date */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        label="Fecha"
+                        type="date"
+                        fullWidth
+                        {...register("date")}
+                        error={!!errors.date}
+                        helperText={errors.date?.message}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ min: dayjs().format("YYYY-MM-DD") }}
+                        required
+                    />
+                </Grid>
 
-                <TextField
-                    label="Hora"
-                    type="time"
-                    name="time"
-                    value={form.time || ""}
-                    onChange={handleChange}
-                    required
-                    inputProps={{
-                        step: 300,
-                        min: "09:00",
-                        max: "20:00",
-                    }}
-                />
+                {/* Hour */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        label="Hora"
+                        type="time"
+                        fullWidth
+                        {...register("time")}
+                        error={!!errors.time}
+                        helperText={errors.time?.message}
+                        inputProps={{ step: 300, min: "09:00", max: "20:00" }}
+                        required
+                    />
+                </Grid>
 
-                <TextField
-                    select
-                    label="Estado"
-                    name="status"
-                    value={form.status}
-                    onChange={handleChange}
-                    sx={{ minWidth: 180 }}
-                >
-                    {STATUS_OPTIONS.map((s) => (
-                        <MenuItem key={s.value} value={s.value}>
-                            {s.label}
-                        </MenuItem>
-                    ))}
-                </TextField>
-
-                <TextField
-                    select
-                    label="Veterinario"
-                    name="veterinarianId"
-                    value={form.veterinarianId}
-                    onChange={handleChange}
-                    sx={{ minWidth: 250 }}
-                    required
-                >
-                    {vets.map((v) => (
-                        <MenuItem key={v.id} value={v.id}>
-                            {v.name} {v.surname} ({v.role})
-                        </MenuItem>
-                    ))}
-                </TextField>
-
-                <TextField
-                    select
-                    label="Dueño"
-                    name="ownerId"
-                    value={form.ownerId}
-                    onChange={handleChange}
-                    sx={{ minWidth: 200 }}
-                    required
-                    disabled={!!initialValues.ownerId}
-                >
-                    {owners.map((o) => (
-                        <MenuItem key={o.id} value={o.id}>
-                            {o.name} {o.surname}
-                        </MenuItem>
-                    ))}
-                </TextField>
-
-                <TextField
-                    select
-                    label="Mascota"
-                    name="petId"
-                    value={form.petId}
-                    onChange={handleChange}
-                    sx={{ minWidth: 180 }}
-                    required
-                    disabled={!form.ownerId || !!initialValues.petId}
-                >
-                    {pets.map((p) => (
-                        <MenuItem key={p.id} value={p.id}>
-                            {p.name}
-                        </MenuItem>
-                    ))}
-                </TextField>
-
-                <TextField
-                    label="Motivo"
-                    name="reason"
-                    value={form.reason}
-                    onChange={handleChange}
-                    sx={{ minWidth: 300 }}
-                />
-
-                <TextField
-                    label="Notas"
-                    name="notes"
-                    value={form.notes}
-                    onChange={handleChange}
-                    fullWidth
-                    multiline
-                    rows={3}
-                />
-
-                {/* ✅ Botones Guardar / Cancelar */}
-                <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 2, width: "100%" }}>
-                    <Button variant="outlined" color="secondary" onClick={() => navigate(-1)}>
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={saving}
+                {/* Status */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        select
+                        label="Estado"
+                        fullWidth
+                        {...register("status")}
+                        error={!!errors.status}
+                        helperText={errors.status?.message}
                     >
-                        {saving ? <CircularProgress size={24} /> : "Guardar"}
-                    </Button>
-                </Stack>
-            </Stack>
+                        {STATUS_OPTIONS.map((opt) => (
+                            <MenuItem key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Grid>
+
+                {/* Veterinarian */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        select
+                        label="Veterinario"
+                        fullWidth
+                        {...register("veterinarianId")}
+                        error={!!errors.veterinarianId}
+                        helperText={errors.veterinarianId?.message}
+                        required
+                    >
+                        {vets.map((v) => (
+                            <MenuItem key={v.id} value={v.id}>
+                                {v.name} {v.surname}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Grid>
+
+                {/* Owner */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        select
+                        label="Dueño"
+                        fullWidth
+                        {...register("ownerId")}
+                        error={!!errors.ownerId}
+                        helperText={errors.ownerId?.message}
+                        required
+                        disabled={!!initialValues.ownerId}
+                    >
+                        {owners.map((o) => (
+                            <MenuItem key={o.id} value={o.id}>
+                                {o.name} {o.surname}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Grid>
+
+                {/* Pet */}
+                <Grid item xs={12} sm={6} md={4}>
+                    <TextField
+                        select
+                        label="Mascota"
+                        fullWidth
+                        {...register("petId")}
+                        error={!!errors.petId}
+                        helperText={errors.petId?.message}
+                        required
+                        disabled={!ownerId && !initialValues.petId} 
+                    >
+                        {pets.map((p) => (
+                            <MenuItem key={p.id} value={p.id}>
+                                {p.name}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Grid>
+
+
+                {/* Reason */}
+                <Grid item xs={12} md={6}>
+                    <TextField
+                        label="Motivo"
+                        fullWidth
+                        {...register("reason")}
+                        error={!!errors.reason}
+                        helperText={errors.reason?.message}
+                    />
+                </Grid>
+
+                {/* Notes */}
+                <Grid item xs={12} md={6}>
+                    <TextField
+                        label="Notas"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        {...register("notes")}
+                        error={!!errors.notes}
+                        helperText={errors.notes?.message}
+                    />
+                </Grid>
+
+                {/* Buttons */}
+                <Grid item xs={12}>
+                    <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        justifyContent="flex-end"
+                        spacing={2}
+                    >
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() => navigate(-1)}
+                            fullWidth={true}
+                            sx={{
+                                "@media (min-width:600px)": {
+                                    width: "auto",
+                                },
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            disabled={!isValid || saving}
+                            fullWidth={true}
+                            sx={{
+                                "@media (min-width:600px)": {
+                                    width: "auto",
+                                },
+                            }}
+                        >
+                            {saving ? <CircularProgress size={22} /> : "Guardar"}
+                        </Button>
+                    </Stack>
+                </Grid>
+            </Grid>
         </form>
     );
 };
