@@ -148,7 +148,10 @@ const UserForm = ({ initialValues, onSubmit, saving }) => {
 
                 {/* Botón */}
                 <Grid item xs={12}>
-                    <Stack direction="row" justifyContent="flex-end">
+                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                        <Button variant="outlined" color="secondary" onClick={() => window.history.back()}>
+                            Cancelar
+                        </Button>
                         <Button
                             type="submit"
                             variant="contained"
@@ -165,6 +168,7 @@ const UserForm = ({ initialValues, onSubmit, saving }) => {
                         </Button>
                     </Stack>
                 </Grid>
+
             </Grid>
         </form>
     );

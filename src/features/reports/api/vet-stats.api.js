@@ -73,3 +73,53 @@ export const getTopDiagnoses = async (limit = 5) => {
     count: item.count,
   }));
 };
+
+// 6️⃣ Mascotas por especie
+export const getPetsBySpecies = async () => {
+  const { data } = await axios.get(`${BASE}/pets-by-species`);
+  // Backend → species, count
+  return data.map((item) => ({
+    species: item.species,
+    count: item.count,
+  }));
+};
+
+// 7️⃣ Mascotas por género
+export const getPetsByGender = async () => {
+  const { data } = await axios.get(`${BASE}/pets-by-gender`);
+  return data.map((item) => ({
+    gender: item.gender === "MALE" ? "Macho" : "Hembra",
+    count: item.count,
+  }));
+};
+
+// 8️⃣ Turnos por mes o semana
+export const getAppointmentsByPeriod = async (type = "month", year) => {
+  const { data } = await axios.get(`${BASE}/appointments-by-period`, {
+    params: { type, year },
+  });
+  return data.map((item) => ({
+    period: item.period,
+    count: item.totalAppointments,
+  }));
+};
+
+// 9️⃣ Promedio de edad de mascotas
+export const getAveragePetAge = async () => {
+  const { data } = await axios.get(`${BASE}/average-pet-age`);
+  return data.averageAge;
+};
+
+// 🔟 Diagnósticos más frecuentes por especie
+export const getTopDiagnosesBySpecies = async (limit = 10) => {
+  const { data } = await axios.get(`${BASE}/top-diagnoses-by-species`, {
+    params: { limit },
+  });
+
+  // Backend → species, diagnosis, count
+  return data.map((item) => ({
+    species: item.species,
+    diagnosis: item.diagnosis,
+    count: item.count,
+  }));
+};

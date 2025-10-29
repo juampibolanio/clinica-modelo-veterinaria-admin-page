@@ -1,6 +1,13 @@
-// src/modules/products/pages/ProductList.jsx
 import { useEffect, useState } from "react";
-import { Box, Stack, Typography, IconButton, Tooltip, Button } from "@mui/material";
+import {
+    Box,
+    Stack,
+    Typography,
+    IconButton,
+    Tooltip,
+    Button,
+    Alert,
+} from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -18,10 +25,19 @@ const ProductList = () => {
     const [openConfirm, setOpenConfirm] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
 
+    // Estado para advertencias
+    const [lowStockProducts, setLowStockProducts] = useState([]);
+
     const fetchData = async () => {
         try {
             const data = await getProducts();
-            setRows(data.content || []);
+            const products = data.content || data;
+
+            setRows(products);
+
+            // Filtrar productos con stock bajo (<5)
+            const lowStock = products.filter((p) => p.stock < 5);
+            setLowStockProducts(lowStock);
         } catch {
             enqueueSnackbar("Error al cargar los productos", { variant: "error" });
         } finally {
@@ -49,7 +65,27 @@ const ProductList = () => {
         { field: "id", headerName: "ID", width: 80 },
         { field: "name", headerName: "Nombre", flex: 1 },
         { field: "type", headerName: "Tipo", flex: 1 },
-        { field: "stock", headerName: "Stock", width: 100 },
+        {
+            field: "stock",
+            headerName: "Stock",
+            width: 100,
+            renderCell: (params) => {
+                const stock = params.value;
+                const color =
+                    stock === 0
+                        ? "red"
+                        : stock < 5
+                            ? "orange"
+                            : "inherit";
+                const fontWeight = stock < 5 ? 700 : 400;
+
+                return (
+                    <Typography color={color} fontWeight={fontWeight}>
+                        {stock}
+                    </Typography>
+                );
+            },
+        },
         { field: "categoryName", headerName: "Categoría", flex: 1 },
         {
             field: "actions",
@@ -84,10 +120,22 @@ const ProductList = () => {
                 <Typography variant="h4" fontWeight={700}>
                     Productos
                 </Typography>
-                <Button startIcon={<AddIcon />} variant="contained" onClick={() => navigate("/products/create")}>
+                <Button
+                    startIcon={<AddIcon />}
+                    variant="contained"
+                    onClick={() => navigate("/products/create")}
+                >
                     Nuevo Producto
                 </Button>
             </Stack>
+
+            {/* 🔔 Alerta de productos con bajo stock */}
+            {lowStockProducts.length > 0 && (
+                <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
+                    Hay {lowStockProducts.length} producto(s) con bajo stock (
+                    {lowStockProducts.map((p) => p.name).join(", ")}).
+                </Alert>
+            )}
 
             <DataGrid
                 rows={rows}

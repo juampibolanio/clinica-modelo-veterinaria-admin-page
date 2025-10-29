@@ -11,6 +11,7 @@ import {
     IconButton,
     Tooltip,
     TextField,
+    Chip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -18,10 +19,14 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import PetsIcon from "@mui/icons-material/Pets";
 import PersonIcon from "@mui/icons-material/Person";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { useNavigate, useParams } from "react-router-dom";
 import { getOwnerById, patchOwner } from "../api/owners.api";
 import { getPetsByOwnerId } from "../../pets/api/pets.api";
+import { listAppointments } from "../../appointments/api/appointments.api";
+import { STATUS_COLOR, formatStatus } from "../../appointments/utils/utils";
 import { useSnackbar } from "notistack";
+import dayjs from "dayjs";
 
 const OwnerDetail = () => {
     const { id } = useParams();
@@ -30,7 +35,9 @@ const OwnerDetail = () => {
 
     const [owner, setOwner] = useState(null);
     const [pets, setPets] = useState([]);
+    const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadingAppointments, setLoadingAppointments] = useState(true);
     const [editingDebt, setEditingDebt] = useState(false);
     const [newDebt, setNewDebt] = useState("");
 
@@ -41,17 +48,32 @@ const OwnerDetail = () => {
             const petData = await getPetsByOwnerId(id);
             setPets(petData);
         } catch {
-            enqueueSnackbar("Error al cargar la información del dueño", {
-                variant: "error",
-            });
+            enqueueSnackbar("Error al cargar la información del dueño", { variant: "error" });
             navigate("/owners");
         } finally {
             setLoading(false);
         }
     };
 
+    const fetchAppointments = async () => {
+        try {
+            setLoadingAppointments(true);
+            const data = await listAppointments({
+                ownerId: id,
+                page: 0,
+                size: 5,
+                sortBy: "date",
+                direction: "desc",
+            });
+            setAppointments(data.content || []);
+        } finally {
+            setLoadingAppointments(false);
+        }
+    };
+
     useEffect(() => {
         fetchOwnerData();
+        fetchAppointments();
     }, [id]);
 
     const handleDebtSave = async () => {
@@ -146,14 +168,8 @@ const OwnerDetail = () => {
                         <Typography variant="subtitle2" color="text.secondary">
                             Deuda total
                         </Typography>
-
                         {editingDebt ? (
-                            <Stack
-                                direction="row"
-                                spacing={1}
-                                alignItems="center"
-                                flexWrap="wrap"
-                            >
+                            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                                 <TextField
                                     size="small"
                                     type="number"
@@ -178,12 +194,7 @@ const OwnerDetail = () => {
                                 </Stack>
                             </Stack>
                         ) : (
-                            <Stack
-                                direction="row"
-                                alignItems="center"
-                                spacing={1}
-                                flexWrap="wrap"
-                            >
+                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                                 <Typography
                                     variant="body1"
                                     color={owner.totalDebt > 0 ? "error.main" : "success.main"}
@@ -259,12 +270,7 @@ const OwnerDetail = () => {
                                         Peso: {pet.weight} kg • Edad: {pet.age || "-"} años
                                     </Typography>
 
-                                    <Stack
-                                        direction="row"
-                                        spacing={1}
-                                        mt="auto"
-                                        justifyContent="flex-start"
-                                    >
+                                    <Stack direction="row" spacing={1} mt="auto">
                                         <Tooltip title="Ver detalle">
                                             <IconButton
                                                 color="primary"
@@ -279,6 +285,57 @@ const OwnerDetail = () => {
                             </Grid>
                         ))}
                     </Grid>
+                )}
+            </Paper>
+
+            {/* Turnos del cliente */}
+            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                    <CalendarMonthIcon color="primary" />
+                    <Typography variant="h6" fontWeight={700}>
+                        Turnos
+                    </Typography>
+                    <Button
+                        variant="contained"
+                        sx={{ ml: "auto" }}
+                        onClick={() => navigate(`/appointments/create?ownerId=${id}`)}
+                    >
+                        Nuevo turno
+                    </Button>
+                </Stack>
+                <Divider sx={{ mb: 2 }} />
+
+                {loadingAppointments ? (
+                    <CircularProgress />
+                ) : appointments.length === 0 ? (
+                    <Typography color="text.secondary">
+                        No hay turnos registrados.
+                    </Typography>
+                ) : (
+                    appointments.map((a) => (
+                        <Box key={a.id} sx={{ py: 1 }}>
+                            <Stack direction="row" spacing={2} alignItems="center">
+                                <Typography sx={{ minWidth: 120 }}>
+                                    {dayjs(a.date).format("DD/MM/YYYY")} {a.time}
+                                </Typography>
+                                <Chip
+                                    label={formatStatus(a.status)}
+                                    size="small"
+                                    color={STATUS_COLOR[a.status] || "default"}
+                                />
+                                <Typography flex={1}>
+                                    {a.petName ? `Mascota: ${a.petName}` : "Sin mascota"}
+                                </Typography>
+                                <Button
+                                    size="small"
+                                    onClick={() => navigate(`/appointments/${a.id}`)}
+                                >
+                                    Ver
+                                </Button>
+                            </Stack>
+                            <Divider sx={{ mt: 1 }} />
+                        </Box>
+                    ))
                 )}
             </Paper>
         </Stack>

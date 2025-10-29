@@ -53,12 +53,14 @@ const OwnerForm = ({ defaultValues, onSubmit, submitting, mode = "create" }) => 
                 ))}
             </Grid>
 
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={3}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={3} justifyContent="flex-end">
+                <Button variant="outlined" color="secondary" onClick={() => window.history.back()}>
+                    Cancelar
+                </Button>
                 <Button
                     type="submit"
                     variant="contained"
                     disabled={submitting}
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                     {submitting
                         ? "Guardando..."

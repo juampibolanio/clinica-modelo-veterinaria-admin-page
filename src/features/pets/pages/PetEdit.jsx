@@ -60,9 +60,13 @@ const PetEdit = () => {
             <PetForm
                 onSubmit={handleSubmit}
                 submitting={saving}
-                defaultValues={pet}
+                defaultValues={{
+                    ...pet,
+                    birthDate: pet?.birthDate ? String(pet.birthDate).slice(0, 10) : "",
+                }}
                 mode="edit"
             />
+
         </Stack>
     );
 };

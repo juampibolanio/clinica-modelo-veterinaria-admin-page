@@ -14,13 +14,14 @@ import BarChartIcon from "@mui/icons-material/BarChartRounded";
 import SecurityIcon from "@mui/icons-material/SecurityRounded";
 import LogoutIcon from "@mui/icons-material/LogoutRounded";
 import FeedIcon from "@mui/icons-material/FeedRounded";
+import VaccinesIcon from "@mui/icons-material/VaccinesRounded";
 
 import NavItem from "../common/NavItem";
 import logo from "../../assets/favicon.svg";
 
 const Sidebar = ({ onClose }) => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
 
   const handleLogout = () => {
@@ -30,15 +31,16 @@ const Sidebar = ({ onClose }) => {
     window.location.reload();
   };
 
-  // 🔹 Ítems principales del panel (visibles para cualquier usuario autenticado)
+  // Menú principal
   const navItems = [
     { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { label: "Blog", icon: <ArticleIcon />, path: "/blog" },
     { label: "Clientes", icon: <PeopleIcon />, path: "/owners" },
     { label: "Pacientes", icon: <PetsIcon />, path: "/pets" },
     { label: "Turnos", icon: <EventIcon />, path: "/appointments" },
-    {label: "Historias Clínicas", icon: <FeedIcon />, path: "/clinical-history",},
-    // 🔹 Submenú Productos (antes Stock)
+    { label: "Historias Clínicas", icon: <FeedIcon />, path: "/clinical-history" },
+    { label: "Vacunación", icon: <VaccinesIcon />, path: "/applied-vaccines" },
+
     {
       label: "Productos",
       icon: <InventoryIcon />,
@@ -48,11 +50,17 @@ const Sidebar = ({ onClose }) => {
       ],
     },
 
-    // 🔹 Otros módulos
     { label: "Reportes", icon: <BarChartIcon />, path: "/reports" },
-    { label: "Seguridad", icon: <SecurityIcon />, path: "/security" },
-
   ];
+
+  // Sección exclusiva para admin
+  if (user?.role === "ADMIN") {
+    navItems.push({
+      label: "Seguridad",
+      icon: <SecurityIcon />,
+      path: "/security",
+    });
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -63,9 +71,10 @@ const Sidebar = ({ onClose }) => {
           Clínica Modelo
         </Typography>
       </Box>
+
       <Divider />
 
-      {/* Navigation */}
+      {/* Navegación */}
       <List sx={{ flexGrow: 1 }}>
         {navItems.map((item) => (
           <NavItem key={item.label} {...item} onClick={onClose} />
@@ -74,7 +83,7 @@ const Sidebar = ({ onClose }) => {
 
       <Divider />
 
-      {/* Logout */}
+      {/* Cerrar sesión */}
       <NavItem
         label="Cerrar sesión"
         icon={<LogoutIcon />}

@@ -103,9 +103,15 @@ const ProductForm = ({ initialValues, onSubmit, loading }) => {
                     ))}
                 </TextField>
 
-                <Button variant="contained" type="submit" disabled={loading}>
-                    {loading ? <CircularProgress size={24} color="inherit" /> : "Guardar"}
-                </Button>
+                <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                    <Button variant="outlined" color="secondary" onClick={() => window.history.back()}>
+                        Cancelar
+                    </Button>
+                    <Button variant="contained" type="submit" disabled={loading}>
+                        {loading ? <CircularProgress size={24} color="inherit" /> : "Guardar"}
+                    </Button>
+                </Stack>
+
             </Stack>
         </form>
     );
