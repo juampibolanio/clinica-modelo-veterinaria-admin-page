@@ -1,10 +1,14 @@
 import api from "../../../libs/axios";
 
+/**
+ * This module contains API calls related to products.
+ */
+
 const BASE = "/api/products";
 
-// ✅ Obtener productos con paginación y ordenamiento
+// Get products with pagination and sorting
 export const getProducts = async (params = {}) => {
-  // Valores por defecto
+  // Default values
   const { page = 0, size = 10, sortBy = "id", direction = "asc" } = params;
 
   const { data } = await api.get(BASE, {
@@ -14,24 +18,24 @@ export const getProducts = async (params = {}) => {
   return data;
 };
 
-// ✅ Obtener producto por ID
+// Get product by ID
 export const getProductById = async (id) => {
   const { data } = await api.get(`${BASE}/${id}`);
   return data;
 };
 
-// ✅ Crear producto
+// Create new product
 export const createProduct = async (payload) => {
   const { data } = await api.post(BASE, payload);
   return data;
 };
 
-// ✅ Editar producto (PATCH)
+// Update existing product
 export const patchProduct = async (id, payload) => {
-  // Excluimos campos que el backend no admite
+  // Exclude 'id' and 'categoryName' from payload
   const { id: _, categoryName, ...body } = payload;
 
-  // Aseguramos que 'stock' sea número (por si llega como string)
+  // Convert 'price' and 'stock' to numbers if they exist
   if (body.stock !== undefined) {
     body.stock = Number(body.stock);
   }
@@ -40,7 +44,7 @@ export const patchProduct = async (id, payload) => {
   return data;
 };
 
-// ✅ Eliminar producto
+// Delete product by ID
 export const deleteProduct = async (id) => {
   await api.delete(`${BASE}/${id}`);
 };

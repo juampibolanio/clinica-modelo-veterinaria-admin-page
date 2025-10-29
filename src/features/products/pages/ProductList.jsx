@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
     Box,
     Stack,
@@ -7,6 +7,7 @@ import {
     Tooltip,
     Button,
     Alert,
+    Divider,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -17,6 +18,10 @@ import { useSnackbar } from "notistack";
 import { getProducts, deleteProduct } from "../api/products.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 
+/**
+ * ProductList
+ * Displays a paginated list of products with edit/delete actions and low-stock alerts.
+ */
 const ProductList = () => {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
@@ -27,13 +32,15 @@ const ProductList = () => {
     const [pageSize, setPageSize] = useState(10);
     const [totalElements, setTotalElements] = useState(0);
 
-    const [openConfirm, setOpenConfirm] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
 
     const [lowStockProducts, setLowStockProducts] = useState([]);
 
-    // 🔹 Cargar productos desde el backend
-    const fetchData = async (currentPage = page, currentSize = pageSize) => {
+    // ==============================
+    // Fetch products
+    // ==============================
+    const fetchProducts = async (currentPage = page, currentSize = pageSize) => {
         try {
             setLoading(true);
             const data = await getProducts({
@@ -43,11 +50,11 @@ const ProductList = () => {
                 direction: "asc",
             });
 
-            const products = data.content || data;
+            const products = data?.content || data || [];
             setRows(products);
-            setTotalElements(data.totalElements || products.length);
+            setTotalElements(data?.totalElements || products.length);
 
-            // Filtrar productos con stock bajo
+            // Identify low-stock items (<5)
             const lowStock = products.filter((p) => p.stock < 5);
             setLowStockProducts(lowStock);
         } catch (err) {
@@ -58,131 +65,170 @@ const ProductList = () => {
         }
     };
 
-    // 🔁 Recargar al cambiar página o tamaño
-    useEffect(() => {
-        fetchData(page, pageSize);
-    }, [page, pageSize]);
-
-    const handleDelete = async () => {
+    // ==============================
+    // Handle product deletion
+    // ==============================
+    const handleConfirmDelete = async () => {
+        if (!selectedProduct) return;
         try {
-            await deleteProduct(selectedId);
+            await deleteProduct(selectedProduct.id);
             enqueueSnackbar("Producto eliminado correctamente", { variant: "success" });
-            fetchData(0, pageSize);
+            fetchProducts(0, pageSize);
             setPage(0);
         } catch {
             enqueueSnackbar("Error al eliminar el producto", { variant: "error" });
         } finally {
-            setOpenConfirm(false);
+            setConfirmOpen(false);
         }
     };
 
-    const columns = [
-        { field: "id", headerName: "ID", width: 80 },
-        { field: "name", headerName: "Nombre", flex: 1 },
-        { field: "type", headerName: "Tipo", flex: 1 },
-        {
-            field: "stock",
-            headerName: "Stock",
-            width: 100,
-            renderCell: (params) => {
-                const stock = params.value;
-                const color =
-                    stock === 0 ? "red" : stock < 5 ? "orange" : "inherit";
-                const fontWeight = stock < 5 ? 700 : 400;
+    // ==============================
+    // Effects
+    // ==============================
+    useEffect(() => {
+        fetchProducts(page, pageSize);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, pageSize]);
 
-                return (
-                    <Typography color={color} fontWeight={fontWeight}>
-                        {stock}
-                    </Typography>
-                );
+    // ==============================
+    // Columns
+    // ==============================
+    const columns = useMemo(
+        () => [
+            { field: "id", headerName: "ID", width: 80 },
+            { field: "name", headerName: "Nombre", flex: 1 },
+            { field: "type", headerName: "Tipo", flex: 1 },
+            {
+                field: "stock",
+                headerName: "Stock",
+                width: 110,
+                renderCell: (params) => {
+                    const stock = params.value;
+                    const color =
+                        stock === 0 ? "error.main" : stock < 5 ? "warning.main" : "text.primary";
+                    const fontWeight = stock < 5 ? 700 : 400;
+
+                    return (
+                        <Typography sx={{ color, fontWeight }}>
+                            {stock}
+                        </Typography>
+                    );
+                },
             },
-        },
-        { field: "categoryName", headerName: "Categoría", flex: 1 },
-        {
-            field: "actions",
-            headerName: "Acciones",
-            width: 150,
-            sortable: false,
-            renderCell: (params) => (
-                <>
-                    <Tooltip title="Editar">
-                        <IconButton onClick={() => navigate(`/products/edit/${params.row.id}`)}>
-                            <EditIcon />
-                        </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Eliminar">
-                        <IconButton
-                            color="error"
-                            onClick={() => {
-                                setSelectedId(params.row.id);
-                                setOpenConfirm(true);
-                            }}
-                        >
-                            <DeleteIcon />
-                        </IconButton>
-                    </Tooltip>
-                </>
-            ),
-        },
-    ];
+            { field: "categoryName", headerName: "Categoría", flex: 1 },
+            {
+                field: "actions",
+                headerName: "Acciones",
+                sortable: false,
+                width: 150,
+                renderCell: (params) => (
+                    <Stack direction="row" spacing={1}>
+                        <Tooltip title="Editar">
+                            <IconButton
+                                size="small"
+                                color="secondary"
+                                onClick={() => navigate(`/products/edit/${params.row.id}`)}
+                            >
+                                <EditIcon />
+                            </IconButton>
+                        </Tooltip>
 
+                        <Tooltip title="Eliminar">
+                            <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => {
+                                    setSelectedProduct(params.row);
+                                    setConfirmOpen(true);
+                                }}
+                            >
+                                <DeleteIcon />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
+                ),
+            },
+        ],
+        [navigate]
+    );
+
+    // ==============================
+    // Render
+    // ==============================
     return (
-        <Box>
+        <Stack spacing={2}>
             {/* Header */}
             <Stack
-                direction="row"
+                direction={{ xs: "column", sm: "row" }}
                 justifyContent="space-between"
-                alignItems="center"
-                mb={2}
+                alignItems={{ xs: "stretch", sm: "center" }}
+                spacing={1}
             >
-                <Typography variant="h4" fontWeight={700}>
+                <Typography variant="h4" fontWeight={800}>
                     Productos
                 </Typography>
+
                 <Button
-                    startIcon={<AddIcon />}
                     variant="contained"
+                    startIcon={<AddIcon />}
                     onClick={() => navigate("/products/create")}
+                    sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
-                    Nuevo Producto
+                    Nuevo producto
                 </Button>
             </Stack>
 
-            {/* 🔔 Alerta de bajo stock */}
+            <Divider />
+
+            {/* Low-stock alert */}
             {lowStockProducts.length > 0 && (
-                <Alert severity="warning" sx={{ mb: 2, borderRadius: 2 }}>
-                    Hay {lowStockProducts.length} producto(s) con bajo stock:{" "}
+                <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                    Hay <b>{lowStockProducts.length}</b> producto(s) con bajo stock:{" "}
                     {lowStockProducts.map((p) => p.name).join(", ")}.
                 </Alert>
             )}
 
-            {/* Tabla con paginación de backend */}
-            <DataGrid
-                rows={rows}
-                columns={columns}
-                rowCount={totalElements}
-                paginationMode="server"
-                paginationModel={{ page, pageSize }}
-                onPaginationModelChange={(model) => {
-                    // MUI usa base 0 igual que Spring, así que es directo
-                    setPage(model.page);
-                    setPageSize(model.pageSize);
-                }}
-                pageSizeOptions={[5, 10, 20]}
-                loading={loading}
-                disableRowSelectionOnClick
-                autoHeight
-                getRowId={(row) => row.id}
-            />
+            {/* Products table */}
+            <Box sx={{ width: "100%" }}>
+                <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    rowCount={totalElements}
+                    paginationMode="server"
+                    paginationModel={{ page, pageSize }}
+                    onPaginationModelChange={(model) => {
+                        setPage(model.page);
+                        setPageSize(model.pageSize);
+                    }}
+                    pageSizeOptions={[5, 10, 20]}
+                    loading={loading}
+                    disableRowSelectionOnClick
+                    density="compact"
+                    getRowId={(r) => r.id}
+                    sx={{
+                        "& .MuiDataGrid-columnHeaders": { fontWeight: 700 },
+                        "@media (max-width:600px)": {
+                            "& .MuiDataGrid-cell--textLeft": { fontSize: "0.85rem" },
+                        },
+                    }}
+                />
+            </Box>
 
-            {/* Confirmar eliminación */}
+            {/* Delete confirmation */}
             <ConfirmDialog
-                open={openConfirm}
+                open={confirmOpen}
                 title="Eliminar producto"
-                message="¿Seguro que deseas eliminar este producto?"
-                onClose={() => setOpenConfirm(false)}
-                onConfirm={handleDelete}
+                message={
+                    selectedProduct
+                        ? `¿Seguro que deseas eliminar el producto "${selectedProduct.name}"?`
+                        : "¿Confirmar eliminación?"
+                }
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
             />
-        </Box>
+        </Stack>
     );
 };
 

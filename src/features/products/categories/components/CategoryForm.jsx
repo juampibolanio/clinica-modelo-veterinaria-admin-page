@@ -1,10 +1,25 @@
-// src/modules/products/categories/components/CategoryForm.jsx
-import { useState } from "react";
-import { Stack, TextField, Button, CircularProgress } from "@mui/material";
+import { useState, useMemo } from "react";
+import {
+    Stack,
+    TextField,
+    Button,
+    CircularProgress,
+} from "@mui/material";
 
-const CategoryForm = ({ initialValues = { name: "", description: "" }, onSubmit, loading }) => {
+/**
+ * CategoryForm
+ * Handles creation and edition of product categories.
+ */
+const CategoryForm = ({
+    initialValues = { name: "", description: "" },
+    onSubmit,
+    loading = false,
+}) => {
     const [form, setForm] = useState(initialValues);
 
+    // ==============================
+    // Handlers
+    // ==============================
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
@@ -12,30 +27,65 @@ const CategoryForm = ({ initialValues = { name: "", description: "" }, onSubmit,
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSubmit(form);
+        onSubmit?.(form);
     };
 
+    const canSubmit = useMemo(() => form.name.trim().length > 0, [form.name]);
+
+    // ==============================
+    // UI render
+    // ==============================
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
             <Stack spacing={2}>
+                {/* Category name */}
                 <TextField
                     label="Nombre"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
                     required
+                    fullWidth
+                    helperText={
+                        form.name.trim() === ""
+                            ? "El nombre de la categoría es obligatorio"
+                            : " "
+                    }
                 />
+
+                {/* Category description */}
                 <TextField
                     label="Descripción"
                     name="description"
                     value={form.description}
                     onChange={handleChange}
                     multiline
-                    rows={3}
+                    minRows={3}
+                    fullWidth
                 />
-                <Button variant="contained" type="submit" disabled={loading}>
-                    {loading ? <CircularProgress size={24} color="inherit" /> : "Guardar"}
-                </Button>
+
+                {/* Buttons */}
+                <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => window.history.back()}
+                        disabled={loading}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="contained"
+                        type="submit"
+                        disabled={!canSubmit || loading}
+                    >
+                        {loading ? (
+                            <CircularProgress size={22} color="inherit" />
+                        ) : (
+                            "Guardar"
+                        )}
+                    </Button>
+                </Stack>
             </Stack>
         </form>
     );
