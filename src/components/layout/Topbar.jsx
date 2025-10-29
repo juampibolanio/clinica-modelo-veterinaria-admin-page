@@ -1,18 +1,20 @@
-import { AppBar, Box, IconButton, Toolbar, Typography, Avatar, Tooltip } from "@mui/material";
+import { AppBar, Box, IconButton, Toolbar, Typography, Avatar } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import NotificationsIcon from "@mui/icons-material/NotificationsNoneRounded";
-import { useAuth } from "../../features/auth/AuthContext";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 
+/**
+ * * * Topbar component that displays the application title and user information.
+ * @param {function} onMenuClick - Function to be called when the menu button is clicked (for mobile view).
+ * @returns {JSX.Element} The Topbar component.
+ */
 const Topbar = ({ onMenuClick }) => {
   const { user } = useAuth();
   console.log(user)
 
-  // 🧩 Derivar nombre visible del usuario
   const displayName = user
     ? `${user.name || ""} ${user.surname || ""}`.trim() || user.username
     : "Usuario";
 
-  // 🧩 Iniciales para el avatar (ej: "JP")
   const initials = user
     ? `${(user.name?.[0] || "").toUpperCase()}${(user.surname?.[0] || "").toUpperCase()}`
     : "U";
@@ -28,7 +30,7 @@ const Topbar = ({ onMenuClick }) => {
       }}
     >
       <Toolbar sx={{ justifyContent: "space-between" }}>
-        {/* 🔹 Logo y menú */}
+        {/* Menu and logo */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton onClick={onMenuClick} sx={{ display: { md: "none" } }}>
             <MenuIcon />
@@ -38,13 +40,8 @@ const Topbar = ({ onMenuClick }) => {
           </Typography>
         </Box>
 
-        {/* 🔹 Notificaciones y usuario */}
+        {/* User info */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Tooltip title="Notificaciones">
-            <IconButton>
-              <NotificationsIcon />
-            </IconButton>
-          </Tooltip>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Avatar

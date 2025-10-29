@@ -9,25 +9,31 @@ import {
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
+/**
+ * * This component represents a navigation item that can function as a link or a collapsible menu with sub-items.
+ * @param {string} label - The text label for the navigation item.
+ * @param {JSX.Element} icon - The icon to display alongside the label.
+ * @param {string} path - The navigation path for the item.
+ * @param {Array<{ label: string, path: string }>} children - An array of sub-items for the collapsible menu.
+ * @param {() => void} onClick - The callback function to be executed when the item is clicked.
+ * @param {string} color - The color of the navigation item.
+ */
+// eslint-disable-next-line no-unused-vars
 const NavItem = ({ label, icon, path, children, onClick, color }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Activo si coincide la ruta o una subruta
     const active =
         path && (location.pathname === path || location.pathname.startsWith(`${path}/`));
 
-    // Estado para submenú desplegable
     const [open, setOpen] = useState(false);
 
-    // Abre el submenú automáticamente si una ruta hija está activa
     useEffect(() => {
         if (children?.some((c) => location.pathname.startsWith(c.path))) {
             setOpen(true);
         }
     }, [location.pathname, children]);
 
-    // Si tiene hijos, el click solo expande, no navega
     const handleClick = () => {
         if (children) setOpen((prev) => !prev);
         else {
@@ -38,6 +44,7 @@ const NavItem = ({ label, icon, path, children, onClick, color }) => {
 
     return (
         <>
+            {/* Link */}
             <ListItemButton
                 onClick={handleClick}
                 sx={{
@@ -63,7 +70,7 @@ const NavItem = ({ label, icon, path, children, onClick, color }) => {
                 {children && (open ? <ExpandLess /> : <ExpandMore />)}
             </ListItemButton>
 
-            {/* Submenú */}
+            {/* Submenu */}
             {children && (
                 <Collapse in={open} timeout="auto" unmountOnExit>
                     <List disablePadding>

@@ -1,3 +1,8 @@
+/**
+ * Overrides for MUI components to customize their styles.
+ * @param {object} theme - The MUI theme object.
+ * @return {object} The components overrides object.
+ */
 const componentsOverrides = (theme) => ({
   MuiButton: {
     styleOverrides: {

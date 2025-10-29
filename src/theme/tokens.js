@@ -1,4 +1,6 @@
-// Design tokens centralized
+/**
+ * Design tokens for the application's theme.
+ */
 const tokens = {
   palette: {
     primary: { main: "#3781E3" },

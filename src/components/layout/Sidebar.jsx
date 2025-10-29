@@ -1,9 +1,8 @@
 import { Box, Typography, Divider, List } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import { useAuth } from "../../features/auth/AuthContext";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 
-// Icons
 import DashboardIcon from "@mui/icons-material/GridViewRounded";
 import ArticleIcon from "@mui/icons-material/ArticleRounded";
 import PeopleIcon from "@mui/icons-material/PeopleAltRounded";
@@ -19,6 +18,11 @@ import VaccinesIcon from "@mui/icons-material/VaccinesRounded";
 import NavItem from "../common/NavItem";
 import logo from "../../assets/favicon.svg";
 
+/**
+ * * Sidebar component that provides navigation links and user actions.
+ * @param {function} onClose - Function to be called when the sidebar needs to be closed (for mobile view).
+ * @returns {JSX.Element} The Sidebar component.
+ */
 const Sidebar = ({ onClose }) => {
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -31,7 +35,7 @@ const Sidebar = ({ onClose }) => {
     window.location.reload();
   };
 
-  // Menú principal
+  // Main menu
   const navItems = [
     { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
     { label: "Blog", icon: <ArticleIcon />, path: "/blog" },
@@ -53,7 +57,7 @@ const Sidebar = ({ onClose }) => {
     { label: "Reportes", icon: <BarChartIcon />, path: "/reports" },
   ];
 
-  // Sección exclusiva para admin
+  // Exclusive section for admin users
   if (user?.role === "ADMIN") {
     navItems.push({
       label: "Seguridad",
@@ -74,7 +78,7 @@ const Sidebar = ({ onClose }) => {
 
       <Divider />
 
-      {/* Navegación */}
+      {/* Navegation */}
       <List sx={{ flexGrow: 1 }}>
         {navItems.map((item) => (
           <NavItem key={item.label} {...item} onClick={onClose} />
@@ -83,7 +87,7 @@ const Sidebar = ({ onClose }) => {
 
       <Divider />
 
-      {/* Cerrar sesión */}
+      {/* Logout */}
       <NavItem
         label="Cerrar sesión"
         icon={<LogoutIcon />}

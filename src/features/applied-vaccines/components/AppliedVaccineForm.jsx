@@ -11,7 +11,7 @@ import dayjs from "dayjs";
 import { getAllUsers } from "../../users/api/users.api";
 import { getProducts } from "../../products/api/products.api";
 import { listClinicalHistory } from "../../clinical-history/api/clinical-history.api";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
 const empty = {

@@ -13,7 +13,7 @@ import { CONSULTATION_TYPES } from "../constants/consultation-types";
 import { COMMON_DIAGNOSES } from "../constants/common-diagnoses";
 import { getAllUsers } from "../../users/api/users.api";
 import { getProducts } from "../../products/api/products.api";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 
 const empty = {
     consultationType: "",

@@ -6,6 +6,10 @@ import { Outlet } from "react-router-dom";
 
 const drawerWidth = 240;
 
+/**
+ * Dashboard layout component that includes a sidebar and topbar.
+ * @return {JSX.Element} The dashboard layout component. 
+ */
 const DashboardLayout = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const isDesktop = useMediaQuery("(min-width:900px)");

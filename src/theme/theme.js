@@ -2,6 +2,10 @@ import { createTheme } from '@mui/material/styles';
 import tokens from './tokens';
 import componentsOverrides from './components-overrides';
 
+/**
+ * Creates and exports the MUI theme for the application.
+ * @return {object} The MUI theme object.
+ */
 const theme = createTheme({
   palette: {
     mode: 'light',

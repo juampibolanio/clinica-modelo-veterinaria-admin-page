@@ -1,4 +1,6 @@
-// styles variants reusable
+/**
+ * Predefined style variants for consistent UI components.
+ */
 export const v = {
   page: {
     px: { xs: 2, md: 3 },
