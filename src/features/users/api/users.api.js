@@ -1,38 +1,42 @@
 import axios from "../../../libs/axios";
 
+/**
+ * This module contains API calls related to user management.
+ */
+
 const BASE = "/api/users";
 
-// Obtener todos los usuarios
+// Get all users
 export const getAllUsers = async () => {
   const res = await axios.get(BASE);
   return res.data;
 };
 
-// Obtener usuario por ID
+// Get users by ID
 export const getUserById = async (id) => {
   const res = await axios.get(`${BASE}/${id}`);
   return res.data;
 };
 
-// Crear usuario nuevo
+// Create a new user
 export const createUser = async (data) => {
   const res = await axios.post(BASE, data);
   return res.data;
 };
 
-// Actualizar usuario completo (PUT)
+// Update user completely (PUT)
 export const updateUser = async (id, data) => {
   const res = await axios.put(`${BASE}/${id}`, data);
   return res.data;
 };
 
-// Actualización parcial (PATCH)
+// Partial update (PATCH)
 export const patchUser = async (id, data) => {
   const res = await axios.patch(`${BASE}/${id}`, data);
   return res.data;
 };
 
-// Eliminar usuario
+// Delete user
 export const deleteUser = async (id) => {
   await axios.delete(`${BASE}/${id}`);
 };

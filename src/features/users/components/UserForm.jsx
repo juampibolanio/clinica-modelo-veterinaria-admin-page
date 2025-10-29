@@ -1,94 +1,96 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import {
     Grid,
-    TextField,
-    MenuItem,
     Stack,
     Button,
+    TextField,
+    MenuItem,
     CircularProgress,
 } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { userSchema } from "../schemas/user.schema";
 
-const emptyUser = {
-    username: "",
-    name: "",
-    surname: "",
-    email: "",
-    password: "",
-    phoneNumber: "",
-    role: "USER",
-};
+/**
+ * User form component
+ * Handles both creation and edit modes using react-hook-form + zod
+ */
+const UserForm = ({ initialValues, onSubmit, saving = false }) => {
+    const isEdit = !!initialValues;
 
-const UserForm = ({ initialValues, onSubmit, saving }) => {
-    const [form, setForm] = useState(emptyUser);
-    const [showPassword, setShowPassword] = useState(false);
+    // Setup form with defaults and zod validation
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        formState: { errors, isValid },
+    } = useForm({
+        resolver: zodResolver(userSchema),
+        mode: "onChange",
+        defaultValues: {
+            username: "",
+            name: "",
+            surname: "",
+            email: "",
+            password: "",
+            phoneNumber: "",
+            role: "USER",
+        },
+    });
 
-    // Cargar valores iniciales (modo edición)
+    // Load initial values (edit mode)
     useEffect(() => {
         if (initialValues) {
-            setForm((prev) => ({
-                ...prev,
-                ...initialValues,
-                password: "", // nunca traemos el password
-            }));
+            Object.entries(initialValues).forEach(([key, value]) => {
+                if (key !== "password") setValue(key, value ?? "");
+            });
         }
-    }, [initialValues]);
+    }, [initialValues, setValue]);
 
-    // Validación básica
-    const canSubmit = useMemo(() => {
-        return (
-            form.username &&
-            form.name &&
-            form.surname &&
-            form.email &&
-            (initialValues ? true : form.password) // password requerido solo en creación
-        );
-    }, [form, initialValues]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((f) => ({ ...f, [name]: value }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit?.(form);
+    // Handle submit
+    const handleFormSubmit = (data) => {
+        // Remove password if empty in edit mode
+        if (isEdit && !data.password) {
+            delete data.password;
+        }
+        onSubmit?.(data);
     };
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
             <Grid container spacing={2}>
                 {/* Username */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         label="Usuario"
-                        name="username"
                         fullWidth
-                        value={form.username}
-                        onChange={handleChange}
+                        {...register("username")}
+                        error={!!errors.username}
+                        helperText={errors.username?.message}
                         required
                     />
                 </Grid>
 
-                {/* Nombre */}
+                {/* Name */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         label="Nombre"
-                        name="name"
                         fullWidth
-                        value={form.name}
-                        onChange={handleChange}
+                        {...register("name")}
+                        error={!!errors.name}
+                        helperText={errors.name?.message}
                         required
                     />
                 </Grid>
 
-                {/* Apellido */}
+                {/* Surname */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         label="Apellido"
-                        name="surname"
                         fullWidth
-                        value={form.surname}
-                        onChange={handleChange}
+                        {...register("surname")}
+                        error={!!errors.surname}
+                        helperText={errors.surname?.message}
                         required
                     />
                 </Grid>
@@ -97,48 +99,52 @@ const UserForm = ({ initialValues, onSubmit, saving }) => {
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="Email"
-                        name="email"
                         type="email"
                         fullWidth
-                        value={form.email}
-                        onChange={handleChange}
+                        {...register("email")}
+                        error={!!errors.email}
+                        helperText={errors.email?.message}
                         required
                     />
                 </Grid>
 
-                {/* Teléfono */}
+                {/* Phone number */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="Teléfono"
-                        name="phoneNumber"
                         fullWidth
-                        value={form.phoneNumber}
-                        onChange={handleChange}
+                        {...register("phoneNumber")}
+                        error={!!errors.phoneNumber}
+                        helperText={errors.phoneNumber?.message}
                     />
                 </Grid>
 
-                {/* Contraseña */}
+                {/* Password */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="Contraseña"
-                        name="password"
                         type="password"
                         fullWidth
-                        value={form.password}
-                        onChange={handleChange}
-                        required={!initialValues} // obligatorio solo si se crea
+                        {...register("password")}
+                        error={!!errors.password}
+                        helperText={
+                            isEdit
+                                ? "Dejar vacío para mantener la actual"
+                                : errors.password?.message
+                        }
+                        required={!isEdit}
                     />
                 </Grid>
 
-                {/* Rol */}
+                {/* Role */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         select
                         label="Rol"
-                        name="role"
                         fullWidth
-                        value={form.role}
-                        onChange={handleChange}
+                        {...register("role")}
+                        error={!!errors.role}
+                        helperText={errors.role?.message}
                         required
                     >
                         <MenuItem value="USER">Usuario</MenuItem>
@@ -146,16 +152,21 @@ const UserForm = ({ initialValues, onSubmit, saving }) => {
                     </TextField>
                 </Grid>
 
-                {/* Botón */}
+                {/* Buttons */}
                 <Grid item xs={12}>
                     <Stack direction="row" justifyContent="flex-end" spacing={2}>
-                        <Button variant="outlined" color="secondary" onClick={() => window.history.back()}>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() => window.history.back()}
+                        >
                             Cancelar
                         </Button>
+
                         <Button
                             type="submit"
                             variant="contained"
-                            disabled={!canSubmit || saving}
+                            disabled={!isValid || saving}
                         >
                             {saving ? (
                                 <>
@@ -168,7 +179,6 @@ const UserForm = ({ initialValues, onSubmit, saving }) => {
                         </Button>
                     </Stack>
                 </Grid>
-
             </Grid>
         </form>
     );

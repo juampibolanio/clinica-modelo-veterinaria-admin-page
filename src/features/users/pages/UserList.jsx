@@ -1,137 +1,56 @@
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useState } from "react";
 import {
     Box,
     Stack,
     Typography,
     TextField,
     IconButton,
-    Tooltip,
-    Divider,
     Button,
+    Divider,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/SearchRounded";
-import EditIcon from "@mui/icons-material/EditRounded";
-import DeleteIcon from "@mui/icons-material/DeleteOutlineRounded";
 import AddIcon from "@mui/icons-material/AddRounded";
 import { useNavigate } from "react-router-dom";
-import { useSnackbar } from "notistack";
-import { getAllUsers, deleteUser } from "../api/users.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import UserTable from "../components/UserTable";
+import { useUsersData } from "../hooks/userUsersData";
 
-const UsersList = () => {
+/**
+ * This component displays a list of users with search and delete functionalities.
+ * It uses the useUsersData hook to manage user data and state.
+ */
+const UserList = () => {
     const navigate = useNavigate();
-    const { enqueueSnackbar } = useSnackbar();
+    const {
+        rows,
+        loading,
+        keyword,
+        setKeyword,
+        handleDeleteUser,
+    } = useUsersData();
 
-    const [rows, setRows] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [keyword, setKeyword] = useState("");
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const debounceRef = useRef(null);
 
-    // 🔹 Cargar usuarios
-    const fetchUsers = async () => {
-        try {
-            setLoading(true);
-            const data = await getAllUsers();
-            setRows(data || []);
-        } catch {
-            enqueueSnackbar("Error al cargar usuarios", { variant: "error" });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
-
-    // 🔍 Filtro con debounce
-    useEffect(() => {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-            fetchUsers();
-        }, 400);
-        return () => clearTimeout(debounceRef.current);
-    }, [keyword]);
-
-    // 🗑️ Confirmar eliminación
     const handleDeleteClick = (user) => {
         setSelectedUser(user);
         setConfirmOpen(true);
     };
 
-    const handleConfirmDelete = async () => {
+    const handleConfirmDelete = () => {
         if (!selectedUser) return;
-        try {
-            await deleteUser(selectedUser.id);
-            enqueueSnackbar("Usuario eliminado correctamente", { variant: "success" });
-            fetchUsers();
-        } catch {
-            enqueueSnackbar("Error al eliminar usuario", { variant: "error" });
-        } finally {
-            setConfirmOpen(false);
-        }
+        handleDeleteUser(selectedUser.id);
+        setConfirmOpen(false);
     };
-
-    // 🧩 Columnas del DataGrid
-    const columns = useMemo(
-        () => [
-            { field: "id", headerName: "ID", width: 80 },
-            { field: "username", headerName: "Usuario", flex: 1 },
-            { field: "name", headerName: "Nombre", flex: 1 },
-            { field: "surname", headerName: "Apellido", flex: 1 },
-            { field: "email", headerName: "Email", flex: 1.5 },
-            { field: "phoneNumber", headerName: "Teléfono", flex: 1 },
-            {
-                field: "role",
-                headerName: "Rol",
-                flex: 1,
-                renderCell: (params) =>
-                    params.row.role === "ADMIN" ? "Administrador" : "Usuario",
-            },
-            {
-                field: "actions",
-                headerName: "Acciones",
-                width: 160,
-                sortable: false,
-                renderCell: (params) => (
-                    <Stack direction="row" spacing={1}>
-                        <Tooltip title="Editar">
-                            <IconButton
-                                size="small"
-                                color="secondary"
-                                onClick={() => navigate(`/security/${params.row.id}/edit`)}
-                            >
-                                <EditIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Eliminar">
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteClick(params.row)}
-                                disabled={params.row.role === "ADMIN"} // ✅ No borrar admin principal
-                            >
-                                <DeleteIcon />
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
-                ),
-            },
-        ],
-        [navigate]
-    );
 
     return (
         <>
             <Stack spacing={2}>
+                {/* Header */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography variant="h4" fontWeight={800}>
                         Usuarios del Sistema
                     </Typography>
-
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
@@ -141,7 +60,7 @@ const UsersList = () => {
                     </Button>
                 </Stack>
 
-                {/* Buscador */}
+                {/* Search bar */}
                 <Stack direction="row" spacing={1} alignItems="center">
                     <TextField
                         size="small"
@@ -149,29 +68,24 @@ const UsersList = () => {
                         value={keyword}
                         onChange={(e) => setKeyword(e.target.value)}
                     />
-                    <IconButton onClick={fetchUsers}>
+                    <IconButton>
                         <SearchIcon />
                     </IconButton>
                 </Stack>
 
                 <Divider />
 
-                {/* Tabla */}
-                <Box sx={{ height: 560, width: "100%" }}>
-                    <DataGrid
+                {/* Table */}
+                <Box sx={{ width: "100%" }}>
+                    <UserTable
                         rows={rows}
-                        columns={columns}
                         loading={loading}
-                        disableRowSelectionOnClick
-                        density="compact"
-                        sx={{
-                            "& .MuiDataGrid-columnHeaders": { fontWeight: 700 },
-                        }}
+                        onDelete={handleDeleteClick}
                     />
                 </Box>
             </Stack>
 
-            {/* ConfirmDialog */}
+            {/* Confirm Dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar usuario"
@@ -189,4 +103,4 @@ const UsersList = () => {
     );
 };
 
-export default UsersList;
+export default UserList;

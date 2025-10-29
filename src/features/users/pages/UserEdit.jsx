@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Stack, Typography, CircularProgress } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import UserForm from "../components/UserForm";
 import { getUserById, patchUser } from "../api/users.api";
 
+/**
+ * Page: Edit User
+ * Loads existing user data and updates only changed fields.
+ */
 const UserEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -14,12 +18,14 @@ const UserEdit = () => {
     const [saving, setSaving] = useState(false);
     const [userData, setUserData] = useState(null);
 
+    // Fetch user data
     useEffect(() => {
         const fetchUser = async () => {
             try {
                 const data = await getUserById(id);
                 setUserData(data);
-            } catch {
+            } catch (error) {
+                console.error("Error al cargar usuario:", error);
                 enqueueSnackbar("Error al cargar el usuario", { variant: "error" });
                 navigate("/security");
             } finally {
@@ -27,18 +33,20 @@ const UserEdit = () => {
             }
         };
         fetchUser();
-    }, [id]);
+    }, [id, navigate, enqueueSnackbar]);
 
+    // Handle submit (PATCH only changed fields)
     const handleSubmit = async (formData) => {
         try {
             setSaving(true);
-            // Solo mandamos los cambios (PATCH)
-            const updates = {};
-            Object.keys(formData).forEach((k) => {
-                if (formData[k] !== userData[k] && formData[k] !== undefined) {
-                    updates[k] = formData[k];
+
+            // Build PATCH payload only with changed fields
+            const updates = Object.entries(formData).reduce((acc, [key, value]) => {
+                if (value !== userData[key] && value !== undefined && value !== "") {
+                    acc[key] = value;
                 }
-            });
+                return acc;
+            }, {});
 
             if (Object.keys(updates).length === 0) {
                 enqueueSnackbar("No hay cambios para guardar", { variant: "info" });
@@ -46,10 +54,10 @@ const UserEdit = () => {
             }
 
             await patchUser(id, updates);
-            enqueueSnackbar("Usuario actualizado correctamente", { variant: "success" });
+            enqueueSnackbar("Usuario actualizado correctamente ✅", { variant: "success" });
             navigate("/security");
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error("Error al actualizar usuario:", error);
             enqueueSnackbar("Error al actualizar el usuario", { variant: "error" });
         } finally {
             setSaving(false);
@@ -58,7 +66,7 @@ const UserEdit = () => {
 
     if (loading)
         return (
-            <Stack alignItems="center" mt={4}>
+            <Stack alignItems="center" justifyContent="center" mt={4}>
                 <CircularProgress />
             </Stack>
         );
@@ -68,6 +76,7 @@ const UserEdit = () => {
             <Typography variant="h4" fontWeight={800}>
                 Editar Usuario
             </Typography>
+
             <UserForm initialValues={userData} onSubmit={handleSubmit} saving={saving} />
         </Stack>
     );

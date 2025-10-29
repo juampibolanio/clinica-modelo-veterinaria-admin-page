@@ -1,5 +1,9 @@
 import axios from "../../../libs/axios";
 
+/**
+ * This module contains API calls related to owner management.
+ */
+
 const BASE = "/api/owners";
 
 /**

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo } from "react";
 import {
     Box,
     Stack,
@@ -15,66 +15,31 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
 import AddIcon from "@mui/icons-material/PersonAddAlt";
 import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
-import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
-import { deleteOwner, getOwners } from "../api/owners.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import { useOwnersList } from "../hooks/useOwnersList";
 
-const OwnersList = () => {
-    const { enqueueSnackbar } = useSnackbar();
+const OwnerList = () => {
     const navigate = useNavigate();
-    const [rows, setRows] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState({ name: "", surname: "", documentNumber: "" });
-    const debounceRef = useRef(null);
-    const [confirmOpen, setConfirmOpen] = useState(false);
-    const [selectedOwner, setSelectedOwner] = useState(null);
-
-    const fetchOwners = async () => {
-        try {
-            setLoading(true);
-            const data = await getOwners(search);
-            setRows(data);
-        } catch {
-            enqueueSnackbar("Error al cargar dueños", { variant: "error" });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => {
-            fetchOwners();
-        }, 400);
-        return () => clearTimeout(debounceRef.current);
-    }, [search]);
-
-    const handleDeleteClick = (owner) => {
-        setSelectedOwner(owner);
-        setConfirmOpen(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (!selectedOwner) return;
-        try {
-            await deleteOwner(selectedOwner.id);
-            enqueueSnackbar("Dueño eliminado correctamente", { variant: "success" });
-            fetchOwners();
-        } catch {
-            enqueueSnackbar("Error al eliminar", { variant: "error" });
-        } finally {
-            setConfirmOpen(false);
-            setSelectedOwner(null);
-        }
-    };
+    const {
+        rows,
+        loading,
+        search,
+        setSearch,
+        confirmOpen,
+        setConfirmOpen,
+        selectedOwner,
+        setSelectedOwner,
+        handleConfirmDelete,
+        fetchOwners,
+    } = useOwnersList();
 
     const columns = useMemo(
         () => [
             { field: "id", headerName: "ID", width: 80 },
             { field: "name", headerName: "Nombre", flex: 1 },
             { field: "surname", headerName: "Apellido", flex: 1 },
-            { field: "email", headerName: "Email", flex: 1.2 },
+            { field: "email", headerName: "Email", flex: 1.3 },
             { field: "phoneNumber", headerName: "Teléfono", flex: 1 },
             { field: "documentNumber", headerName: "Documento", flex: 1 },
             {
@@ -106,7 +71,10 @@ const OwnersList = () => {
                             <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => handleDeleteClick(params.row)}
+                                onClick={() => {
+                                    setSelectedOwner(params.row);
+                                    setConfirmOpen(true);
+                                }}
                             >
                                 <DeleteIcon />
                             </IconButton>
@@ -115,12 +83,13 @@ const OwnersList = () => {
                 ),
             },
         ],
-        [navigate]
+        [navigate, setConfirmOpen, setSelectedOwner]
     );
 
     return (
         <>
             <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
+                {/* Header */}
                 <Stack
                     direction={{ xs: "column", sm: "row" }}
                     justifyContent="space-between"
@@ -140,11 +109,12 @@ const OwnersList = () => {
                     </Button>
                 </Stack>
 
+                {/* Filters */}
                 <Stack
                     direction={{ xs: "column", sm: "row" }}
                     spacing={1}
-                    flexWrap="wrap"
                     alignItems="center"
+                    flexWrap="wrap"
                 >
                     <TextField
                         size="small"
@@ -176,6 +146,7 @@ const OwnersList = () => {
 
                 <Divider />
 
+                {/* Table */}
                 <Box sx={{ height: { xs: 400, sm: 560 }, width: "100%" }}>
                     <DataGrid
                         rows={rows}
@@ -194,6 +165,7 @@ const OwnersList = () => {
                 </Box>
             </Stack>
 
+            {/* Confirm Dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar dueño"
@@ -211,4 +183,4 @@ const OwnersList = () => {
     );
 };
 
-export default OwnersList;
+export default OwnerList;
