@@ -20,7 +20,7 @@
     "@mui/icons-material": "^7.3.4",
     "@mui/lab": "^7.0.1-beta.18",
     "@mui/material": "^7.3.4",
-    "@mui/x-data-grid": "^8.15.0",
+    "@mui/x-data-grid": "^8.16.0",
     "axios": "^1.12.2",
     "dayjs": "^1.11.18",
     "lodash.debounce": "^4.0.8",

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Box,
     Stack,
@@ -9,27 +9,28 @@ import {
     CircularProgress,
     Button,
     Chip,
+    Tooltip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import PetsIcon from "@mui/icons-material/Pets";
 import PersonIcon from "@mui/icons-material/PersonRounded";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
+import dayjs from "dayjs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
-import dayjs from "dayjs";
+
 import { getPetById, getPetsByOwnerId } from "../api/pets.api";
 import { getOwnerById } from "../../owners/api/owners.api";
 import { listAppointments } from "../../appointments/api/appointments.api";
-import { SectionList } from "../../pets/components/SectionList";
+import { listClinicalHistory } from "../../clinical-history/api/clinical-history.api";
+import { SectionList } from "../components/SectionList";
 import { STATUS_COLOR, formatStatus } from "../../appointments/utils/utils";
+import { petDetailStyles } from "../styles/petDetail.styles";
 
-/**
- * PetDetail
- * Displays pet information, its owner and recent appointments.
- */
 const PetDetail = () => {
-    const { id } = useParams(); // pet ID
+    const { id } = useParams();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
 
@@ -37,14 +38,13 @@ const PetDetail = () => {
     const [owner, setOwner] = useState(null);
     const [relatedPets, setRelatedPets] = useState([]);
     const [appointments, setAppointments] = useState([]);
+    const [clinicalHistories, setClinicalHistories] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [loadingRelated, setLoadingRelated] = useState(true);
     const [loadingAppointments, setLoadingAppointments] = useState(true);
+    const [loadingClinicalHistories, setLoadingClinicalHistories] = useState(true);
 
-    /**
-     * Fetch data for the pet, its owner and related info
-     */
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -52,44 +52,46 @@ const PetDetail = () => {
                 setPet(petData);
 
                 const ownerId = petData.owner?.id || petData.ownerId;
-                if (!ownerId) {
-                    throw new Error("El ID del dueño no está disponible");
-                }
+                if (!ownerId) throw new Error("El ID del dueño no está disponible");
 
-                const ownerData = await getOwnerById(ownerId);
+                const [ownerData, petsData, appointmentsData, historiesData] = await Promise.all([
+                    getOwnerById(ownerId),
+                    getPetsByOwnerId(ownerId),
+                    listAppointments({
+                        petId: id,
+                        page: 0,
+                        size: 5,
+                        sortBy: "date",
+                        direction: "desc",
+                    }),
+                    listClinicalHistory({
+                        petId: id,
+                        page: 0,
+                        size: 5,
+                        sortBy: "date",
+                        direction: "desc",
+                    }),
+                ]);
+
                 setOwner(ownerData);
-
-                const petsData = await getPetsByOwnerId(ownerId);
                 setRelatedPets(petsData || []);
-
-                const appointmentsData = await listAppointments({
-                    petId: id,
-                    page: 0,
-                    size: 5,
-                    sortBy: "date",
-                    direction: "desc",
-                });
                 setAppointments(appointmentsData.content || []);
+                setClinicalHistories(historiesData.content || []);
             } catch (error) {
-                console.error("Error al cargar datos de la mascota:", error);
-                enqueueSnackbar("Error al cargar la información de la mascota", {
-                    variant: "error",
-                });
+                console.error("Error al cargar datos:", error);
+                enqueueSnackbar("Error al cargar la información de la mascota", { variant: "error" });
                 navigate("/pets");
             } finally {
                 setLoading(false);
                 setLoadingRelated(false);
                 setLoadingAppointments(false);
+                setLoadingClinicalHistories(false);
             }
         };
 
         fetchData();
     }, [id, enqueueSnackbar, navigate]);
 
-
-    /**
-     * Loading state
-     */
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
@@ -101,39 +103,39 @@ const PetDetail = () => {
     if (!pet) return null;
 
     return (
-        <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 } }}>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+        <Stack spacing={4} sx={petDetailStyles.container}>
+            {/* HEADER */}
+            <Stack direction={{ xs: "column", sm: "row" }} alignItems="center" spacing={2}>
                 <Button
                     startIcon={<ArrowBackIcon />}
                     variant="outlined"
                     color="secondary"
                     onClick={() => navigate("/pets")}
+                    sx={petDetailStyles.backButton}
                 >
                     Volver
                 </Button>
 
-                <Typography variant="h4" fontWeight={800}>
+                <Typography variant="h4" sx={petDetailStyles.title}>
                     Detalle de la mascota
                 </Typography>
 
                 <Button
                     variant="contained"
-                    color="primary"
                     startIcon={<EditIcon />}
                     onClick={() => navigate(`/pets/${id}/edit`)}
-                    sx={{ ml: "auto" }}
+                    sx={petDetailStyles.editButton}
                 >
                     Editar
                 </Button>
             </Stack>
 
-            {/* General Info */}
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+            {/* INFORMACIÓN GENERAL */}
+            <Paper elevation={0} sx={petDetailStyles.infoCard}>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
                     Información general
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={petDetailStyles.divider} />
 
                 <Grid container spacing={2}>
                     {[
@@ -141,50 +143,49 @@ const PetDetail = () => {
                         { label: "Especie", value: pet.species },
                         { label: "Raza", value: pet.breed || "-" },
                         {
-                            label: "Género",
-                            value:
-                                pet.gender === "MALE"
-                                    ? "Macho"
-                                    : pet.gender === "FEMALE"
-                                        ? "Hembra"
-                                        : "-",
+                            label: "Sexo",
+                            value: pet.gender === "MALE" ? "Macho" : pet.gender === "FEMALE" ? "Hembra" : "-",
                         },
-                        { label: "Peso (kg)", value: pet.weight ? `${pet.weight} kg` : "-" },
+                        { label: "Peso", value: pet.weight ? `${pet.weight} kg` : "-" },
                         {
                             label: "Fecha de nacimiento",
-                            value: pet.birthDate
-                                ? dayjs(pet.birthDate).format("DD/MM/YYYY")
-                                : "-",
+                            value: pet.birthDate ? dayjs(pet.birthDate).format("DD/MM/YYYY") : "-",
                         },
+                        { label: "Color", value: pet.color || "-" },
+                        { label: "Alergias", value: pet.allergies || "-" },
                     ].map((item) => (
                         <Grid key={item.label} item xs={12} sm={6} md={4}>
                             <Typography variant="subtitle2" color="text.secondary">
                                 {item.label}
                             </Typography>
-                            <Typography variant="body1">{item.value}</Typography>
+                            <Typography variant="body1" fontWeight={500}>
+                                {item.value}
+                            </Typography>
                         </Grid>
                     ))}
                 </Grid>
             </Paper>
 
-            {/* Owner Section */}
+            {/* DUEÑO */}
             {owner && (
                 <SectionList
                     icon={<PersonIcon color="primary" />}
-                    title="Dueño"
+                    title="Dueño de la mascota"
                     items={[owner]}
-                    loading={false}
                     emptyText="No se encontró información del dueño."
                     renderItem={(o) => (
                         <>
                             <Typography sx={{ minWidth: 160, fontWeight: 700 }}>
                                 {o.name} {o.surname}
                             </Typography>
-                            <Typography sx={{ minWidth: 160 }}>{o.email}</Typography>
-                            <Typography sx={{ minWidth: 140 }}>{o.phoneNumber}</Typography>
+                            <Typography sx={{ minWidth: 180 }}>{o.email || "Sin correo"}</Typography>
+                            <Typography sx={{ minWidth: 140 }}>{o.phoneNumber || "Sin teléfono"}</Typography>
                             <Button
                                 size="small"
+                                color="primary"
+                                variant="outlined"
                                 onClick={() => navigate(`/owners/${o.id}`)}
+                                sx={petDetailStyles.smallButton}
                             >
                                 Ver detalle
                             </Button>
@@ -193,41 +194,75 @@ const PetDetail = () => {
                 />
             )}
 
-            {/* Related Pets */}
+            {/* OTRAS MASCOTAS */}
             <SectionList
                 icon={<PetsIcon color="primary" />}
                 title="Otras mascotas del dueño"
                 items={relatedPets.filter((p) => p.id !== pet.id)}
                 loading={loadingRelated}
                 emptyText="No hay otras mascotas registradas."
-                createLabel="Nueva mascota"
+                createLabel="Registrar nueva"
                 onCreate={() => navigate(`/pets/create?ownerId=${owner?.id}`)}
                 renderItem={(p) => (
                     <>
-                        <Typography sx={{ minWidth: 160, fontWeight: 700 }}>
-                            {p.name}
-                        </Typography>
-                        <Typography sx={{ minWidth: 140 }}>
-                            {p.species} - {p.breed || "-"}
+                        <Typography sx={{ minWidth: 160, fontWeight: 700 }}>{p.name}</Typography>
+                        <Typography sx={{ minWidth: 160 }}>
+                            {p.species} — {p.breed || "-"}
                         </Typography>
                         <Typography sx={{ minWidth: 100 }}>
-                            {p.gender === "MALE"
-                                ? "Macho"
-                                : p.gender === "FEMALE"
-                                    ? "Hembra"
-                                    : "-"}
+                            {p.gender === "MALE" ? "Macho" : p.gender === "FEMALE" ? "Hembra" : "-"}
+                        </Typography>
+                        <Typography flex={1}>{p.weight ? `${p.weight} kg` : "-"}</Typography>
+                        <Tooltip title="Ver mascota">
+                            <Button
+                                size="small"
+                                color="primary"
+                                onClick={() => navigate(`/pets/${p.id}`)}
+                                sx={petDetailStyles.smallButton}
+                            >
+                                Ver
+                            </Button>
+                        </Tooltip>
+                    </>
+                )}
+            />
+
+            {/* HISTORIAS CLÍNICAS */}
+            <SectionList
+                icon={<MedicalInformationIcon color="primary" />}
+                title="Historias clínicas"
+                items={clinicalHistories}
+                loading={loadingClinicalHistories}
+                emptyText="No hay historias clínicas registradas para esta mascota."
+                createLabel="Nueva historia clínica"
+                onCreate={() => navigate(`/clinical-history/create?petId=${pet.id}`)}
+                renderItem={(h) => (
+                    <>
+                        <Typography sx={{ minWidth: 140 }}>
+                            {dayjs(h.date).format("DD/MM/YYYY")}
+                        </Typography>
+                        <Typography sx={{ minWidth: 180, fontWeight: 600 }}>
+                            {h.consultationType}
                         </Typography>
                         <Typography flex={1}>
-                            {p.weight ? `${p.weight} kg` : "-"}
+                            {h.diagnosis || "Sin diagnóstico"}
                         </Typography>
-                        <Button size="small" onClick={() => navigate(`/pets/${p.id}`)}>
+                        <Typography sx={{ minWidth: 160 }}>
+                            {h.veterinarianName || "Veterinario no especificado"}
+                        </Typography>
+                        <Button
+                            size="small"
+                            color="primary"
+                            onClick={() => navigate(`/clinical-history/${h.id}`)}
+                            sx={petDetailStyles.smallButton}
+                        >
                             Ver
                         </Button>
                     </>
                 )}
             />
 
-            {/* Appointments Section */}
+            {/* TURNOS */}
             <SectionList
                 icon={<CalendarMonthIcon color="primary" />}
                 title="Turnos recientes"
@@ -240,8 +275,8 @@ const PetDetail = () => {
                 }
                 renderItem={(a) => (
                     <>
-                        <Typography sx={{ minWidth: 120 }}>
-                            {dayjs(a.date).format("DD/MM/YYYY")} {a.time}
+                        <Typography sx={{ minWidth: 140 }}>
+                            {dayjs(a.date).format("DD/MM/YYYY")}
                         </Typography>
                         <Chip
                             label={formatStatus(a.status)}
@@ -251,7 +286,9 @@ const PetDetail = () => {
                         <Typography flex={1}>{a.reason || "Sin motivo"}</Typography>
                         <Button
                             size="small"
+                            color="primary"
                             onClick={() => navigate(`/appointments/${a.id}`)}
+                            sx={petDetailStyles.smallButton}
                         >
                             Ver
                         </Button>

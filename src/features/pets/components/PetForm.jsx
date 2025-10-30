@@ -8,40 +8,48 @@ import {
     FormControl,
     InputLabel,
     Select,
+    CircularProgress,
+    Typography,
 } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { petSchema } from "../schema/pet.schema";
+import { petFormStyles } from "../styles/petForm.styles";
+import { useNavigate } from "react-router-dom";
 
 /**
- * PetForm
- * Form for creating or editing a pet.
- * Validated with Zod, fully typed, and modular.
+ * PetForm — Unified form for creating and editing pets.
+ * Uses Zod + React Hook Form + consistent MUI design.
  */
 const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "create" }) => {
+    const navigate = useNavigate();
+
     const {
         handleSubmit,
         control,
-        formState: { errors },
+        formState: { errors, isValid },
     } = useForm({
         resolver: zodResolver(petSchema),
+        mode: "onChange",
         defaultValues: {
-            name: defaultValues.name ?? "",
-            species: defaultValues.species ?? "",
-            breed: defaultValues.breed ?? "",
-            gender: defaultValues.gender ?? "",
-            color: defaultValues.color ?? "",
-            weight: defaultValues.weight ?? "",
-            birthDate: defaultValues.birthDate ?? "",
-            allergies: defaultValues.allergies ?? "",
-            ownerId: defaultValues.ownerId ?? "",
+            name: "",
+            species: "",
+            breed: "",
+            gender: "",
+            color: "",
+            weight: "",
+            birthDate: "",
+            allergies: "",
+            ownerId: "",
+            ...defaultValues,
         },
     });
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <Stack spacing={3}>
-                <Grid container spacing={2}>
+            <Stack spacing={4} sx={petFormStyles.form}>
+                {/* Grid of fields */}
+                <Grid container spacing={3}>
                     {/* Nombre */}
                     <Grid item xs={12} sm={6} md={4}>
                         <Controller
@@ -50,10 +58,11 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                             render={({ field }) => (
                                 <TextField
                                     {...field}
-                                    label="Nombre"
+                                    label="Nombre *"
                                     fullWidth
                                     error={!!errors.name}
                                     helperText={errors.name?.message}
+                                    sx={petFormStyles.textField}
                                 />
                             )}
                         />
@@ -66,11 +75,12 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                             control={control}
                             render={({ field }) => (
                                 <FormControl fullWidth error={!!errors.species}>
-                                    <InputLabel>Especie</InputLabel>
-                                    <Select {...field} label="Especie">
-                                        <MenuItem value="">
-                                            <em>Seleccionar</em>
-                                        </MenuItem>
+                                    <Select
+                                        {...field}
+                                        displayEmpty
+                                        renderValue={(value) => (value ? value : "Especie")}
+                                        sx={petFormStyles.select}
+                                    >
                                         <MenuItem value="Perro">Perro</MenuItem>
                                         <MenuItem value="Gato">Gato</MenuItem>
                                     </Select>
@@ -85,23 +95,24 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                             name="breed"
                             control={control}
                             render={({ field }) => (
-                                <TextField {...field} label="Raza" fullWidth />
+                                <TextField {...field} label="Raza" fullWidth sx={petFormStyles.textField} />
                             )}
                         />
                     </Grid>
 
-                    {/* Género */}
+                    {/* Sexo */}
                     <Grid item xs={12} sm={6} md={4}>
                         <Controller
                             name="gender"
                             control={control}
                             render={({ field }) => (
                                 <FormControl fullWidth error={!!errors.gender}>
-                                    <InputLabel>Género</InputLabel>
-                                    <Select {...field} label="Género">
-                                        <MenuItem value="">
-                                            <em>Seleccionar</em>
-                                        </MenuItem>
+                                    <Select
+                                        {...field}
+                                        displayEmpty
+                                        renderValue={(value) => (value ? (value === "MALE" ? "Macho" : "Hembra") : "Sexo")}
+                                        sx={petFormStyles.select}
+                                    >
                                         <MenuItem value="MALE">Macho</MenuItem>
                                         <MenuItem value="FEMALE">Hembra</MenuItem>
                                     </Select>
@@ -116,7 +127,7 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                             name="color"
                             control={control}
                             render={({ field }) => (
-                                <TextField {...field} label="Color" fullWidth />
+                                <TextField {...field} label="Color" fullWidth sx={petFormStyles.textField} />
                             )}
                         />
                     </Grid>
@@ -138,6 +149,7 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                                         field.onChange(e.target.value === "" ? "" : e.target.value)
                                     }
                                     inputProps={{ step: "0.01", min: 0 }}
+                                    sx={petFormStyles.textField}
                                 />
                             )}
                         />
@@ -157,6 +169,7 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                                     InputLabelProps={{ shrink: true }}
                                     error={!!errors.birthDate}
                                     helperText={errors.birthDate?.message}
+                                    sx={petFormStyles.textField}
                                 />
                             )}
                         />
@@ -168,12 +181,12 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                             name="allergies"
                             control={control}
                             render={({ field }) => (
-                                <TextField {...field} label="Alergias" fullWidth />
+                                <TextField {...field} label="Alergias" fullWidth sx={petFormStyles.textField} />
                             )}
                         />
                     </Grid>
 
-                    {/* Dueño */}
+                    {/* ID del dueño */}
                     <Grid item xs={12} sm={6} md={4}>
                         <Controller
                             name="ownerId"
@@ -190,27 +203,42 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                                         field.onChange(e.target.value === "" ? "" : e.target.value)
                                     }
                                     inputProps={{ min: 1 }}
+                                    sx={petFormStyles.textField}
                                 />
                             )}
                         />
                     </Grid>
                 </Grid>
 
-                {/* Botones */}
-                <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                {/* Action Buttons */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    justifyContent="flex-end"
+                    sx={petFormStyles.actionsContainer}
+                >
                     <Button
                         variant="outlined"
                         color="secondary"
-                        onClick={() => window.history.back()}
+                        onClick={() => navigate(-1)}
+                        sx={petFormStyles.cancelButton}
                     >
                         Cancelar
                     </Button>
-                    <Button type="submit" variant="contained" disabled={submitting}>
-                        {submitting
-                            ? "Guardando..."
-                            : mode === "edit"
-                                ? "Actualizar"
-                                : "Crear"}
+
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={!isValid || submitting}
+                        sx={petFormStyles.submitButton}
+                    >
+                        {submitting ? (
+                            <CircularProgress size={22} sx={{ color: "white" }} />
+                        ) : mode === "edit" ? (
+                            "Guardar cambios"
+                        ) : (
+                            "Crear mascota"
+                        )}
                     </Button>
                 </Stack>
             </Stack>

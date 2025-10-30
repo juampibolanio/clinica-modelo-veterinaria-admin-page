@@ -1,14 +1,12 @@
+// PetEdit.jsx
 import React, { useEffect, useState } from "react";
 import { Stack, Typography, CircularProgress, Box } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
 import PetForm from "../components/PetForm";
 import { getPetById, patchPet } from "../api/pets.api";
+import { petPageStyles } from "../styles/petPage.styles";
 
-/**
- * PetEdit
- * Página para editar los datos de una mascota existente.
- */
 const PetEdit = () => {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
@@ -37,7 +35,7 @@ const PetEdit = () => {
         try {
             setSaving(true);
             await patchPet(id, formData);
-            enqueueSnackbar("Mascota actualizada correctamente", { variant: "success" });
+            enqueueSnackbar("Mascota actualizada correctamente ✅", { variant: "success" });
             navigate(`/pets/${id}`);
         } catch {
             enqueueSnackbar("Error al actualizar la mascota", { variant: "error" });
@@ -46,29 +44,26 @@ const PetEdit = () => {
         }
     };
 
-    if (loading) {
+    if (loading)
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight={250}>
+            <Box sx={petPageStyles.loadingBox}>
                 <CircularProgress />
             </Box>
         );
-    }
 
     if (!pet) return null;
 
     return (
-        <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 } }}>
-            <Typography variant="h4" fontWeight={800}>
+        <Stack sx={petPageStyles.container}>
+            <Typography variant="h4" sx={petPageStyles.title}>
                 Editar mascota
             </Typography>
-
             <PetForm
                 onSubmit={handleSubmit}
                 submitting={saving}
                 mode="edit"
                 defaultValues={{
                     ...pet,
-                    // Si el backend devuelve un timestamp o ISO string, recortamos a YYYY-MM-DD
                     birthDate: pet.birthDate ? String(pet.birthDate).slice(0, 10) : "",
                 }}
             />
