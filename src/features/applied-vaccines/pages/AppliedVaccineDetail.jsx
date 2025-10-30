@@ -18,28 +18,37 @@ import VaccinesIcon from "@mui/icons-material/VaccinesRounded";
 import PersonIcon from "@mui/icons-material/PersonRounded";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
-
 import {
     getAppliedVaccineById,
     deleteAppliedVaccine,
 } from "../api/applied-vaccines.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 
+/**
+ * AppliedVaccineDetail
+ * Displays detailed information about a specific applied vaccine record.
+ */
 const AppliedVaccineDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
 
+    // ==============================
+    // State
+    // ==============================
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
-
     const [confirmOpen, setConfirmOpen] = useState(false);
 
+    // ==============================
+    // Fetch data
+    // ==============================
     const fetchData = async () => {
         try {
             const data = await getAppliedVaccineById(id);
             setItem(data);
-        } catch {
+        } catch (err) {
+            console.error("Error loading applied vaccine:", err);
             enqueueSnackbar("Error al cargar la vacunación", { variant: "error" });
             navigate("/applied-vaccines");
         } finally {
@@ -49,24 +58,40 @@ const AppliedVaccineDetail = () => {
 
     useEffect(() => {
         fetchData();
-        // eslint-disable-next-line
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
+    // ==============================
+    // Handlers
+    // ==============================
     const handleDelete = async () => {
         try {
             await deleteAppliedVaccine(id);
-            enqueueSnackbar("Vacunación eliminada correctamente", { variant: "success" });
+            enqueueSnackbar("Vacunación eliminada correctamente ✅", {
+                variant: "success",
+            });
             navigate("/applied-vaccines");
-        } catch {
-            enqueueSnackbar("No se pudo eliminar la vacunación", { variant: "error" });
+        } catch (err) {
+            console.error("Error deleting applied vaccine:", err);
+            enqueueSnackbar("No se pudo eliminar la vacunación", {
+                variant: "error",
+            });
         } finally {
             setConfirmOpen(false);
         }
     };
 
+    // ==============================
+    // Loading / Empty states
+    // ==============================
     if (loading) {
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                minHeight={300}
+            >
                 <CircularProgress />
             </Box>
         );
@@ -74,15 +99,24 @@ const AppliedVaccineDetail = () => {
 
     if (!item) return null;
 
+    // ==============================
+    // Render
+    // ==============================
     return (
         <Stack spacing={2}>
             {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={1}>
-                <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => navigate(-1)}>
+            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                <Button
+                    variant="outlined"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={() => navigate(-1)}
+                >
                     Volver
                 </Button>
 
-                <Typography variant="h4" fontWeight={800}>Detalle de Vacunación</Typography>
+                <Typography variant="h4" fontWeight={800}>
+                    Detalle de vacunación
+                </Typography>
 
                 <Button
                     sx={{ ml: "auto" }}
@@ -92,6 +126,7 @@ const AppliedVaccineDetail = () => {
                 >
                     Editar
                 </Button>
+
                 <Button
                     color="error"
                     variant="outlined"
@@ -102,31 +137,57 @@ const AppliedVaccineDetail = () => {
                 </Button>
             </Stack>
 
-            {/* Card principal */}
+            {/* Main info card */}
             <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
                 <Stack spacing={2}>
                     <Stack direction="row" alignItems="center" spacing={1}>
                         <VaccinesIcon />
-                        <Typography variant="h6" fontWeight={700}>Información general</Typography>
+                        <Typography variant="h6" fontWeight={700}>
+                            Información general
+                        </Typography>
                     </Stack>
                     <Divider />
 
-                    <Stack direction={{ xs: "column", md: "row" }} gap={4}>
+                    <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        gap={4}
+                        sx={{ mt: 1 }}
+                    >
                         <Stack spacing={1} sx={{ minWidth: 260 }}>
-                            <Typography variant="subtitle2" color="text.secondary">Fecha</Typography>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                Fecha
+                            </Typography>
                             <Typography variant="body1">
-                                {item.date ? dayjs(item.date).format("DD/MM/YYYY") : "-"}
+                                {item.date ? dayjs(item.date).format("DD/MM/YYYY") : "—"}
                             </Typography>
 
-                            <Typography variant="subtitle2" color="text.secondary" mt={2}>Producto (Vacuna)</Typography>
-                            <Typography variant="body1">{item.productName || "-"}</Typography>
+                            <Typography
+                                variant="subtitle2"
+                                color="text.secondary"
+                                mt={2}
+                            >
+                                Producto (vacuna)
+                            </Typography>
+                            <Typography variant="body1">
+                                {item.productName || "—"}
+                            </Typography>
 
-                            <Typography variant="subtitle2" color="text.secondary" mt={2}>Veterinario</Typography>
-                            <Typography variant="body1">{item.veterinarianName || "-"}</Typography>
+                            <Typography
+                                variant="subtitle2"
+                                color="text.secondary"
+                                mt={2}
+                            >
+                                Veterinario
+                            </Typography>
+                            <Typography variant="body1">
+                                {item.veterinarianName || "—"}
+                            </Typography>
                         </Stack>
 
                         <Stack spacing={1} sx={{ flex: 1 }}>
-                            <Typography variant="subtitle2" color="text.secondary">Observaciones</Typography>
+                            <Typography variant="subtitle2" color="text.secondary">
+                                Observaciones
+                            </Typography>
                             <Typography variant="body1">
                                 {item.observations || "—"}
                             </Typography>
@@ -135,10 +196,17 @@ const AppliedVaccineDetail = () => {
                 </Stack>
             </Paper>
 
-            {/* Relacionados */}
+            {/* Related records */}
             <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-                    <Typography variant="h6" fontWeight={700}>Registros relacionados</Typography>
+                <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={1}
+                    mb={1}
+                >
+                    <Typography variant="h6" fontWeight={700}>
+                        Registros relacionados
+                    </Typography>
                 </Stack>
                 <Divider sx={{ mb: 2 }} />
 
@@ -154,7 +222,9 @@ const AppliedVaccineDetail = () => {
                     <Button
                         variant="outlined"
                         startIcon={<FeedIcon />}
-                        onClick={() => navigate(`/clinical-history/${item.clinicalHistoryId}`)}
+                        onClick={() =>
+                            navigate(`/clinical-history/${item.clinicalHistoryId}`)
+                        }
                     >
                         Ver historia clínica
                     </Button>
@@ -169,7 +239,7 @@ const AppliedVaccineDetail = () => {
                 </Stack>
             </Paper>
 
-            {/* ConfirmDialog */}
+            {/* Delete confirmation dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar vacunación"

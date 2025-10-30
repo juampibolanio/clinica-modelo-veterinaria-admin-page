@@ -1,7 +1,6 @@
-// src/features/appointments/pages/AppointmentEdit.jsx
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { Stack, Typography, CircularProgress } from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import AppointmentForm from "../components/AppointmentForm";
 import { getAppointmentById, patchAppointment } from "../api/appointments.api";
@@ -28,18 +27,25 @@ const normalizeToForm = (a) => ({
 const AppointmentEdit = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { enqueueSnackbar } = useSnackbar();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [appointment, setAppointment] = useState(null);
+    const [appointment, setAppointment] = useState(
+        location.state?.appointment ? normalizeToForm(location.state.appointment) : null
+    );
 
-    // 🔹 Fetch appointment by ID
+    /**
+     * Fetch appointment if not provided via navigation state
+     */
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await getAppointmentById(id);
-                setAppointment(normalizeToForm(data));
+                if (!appointment) {
+                    const data = await getAppointmentById(id);
+                    setAppointment(normalizeToForm(data));
+                }
             } catch (error) {
                 console.error("Error al cargar turno:", error);
                 enqueueSnackbar("Error al cargar el turno", { variant: "error" });
@@ -49,13 +55,15 @@ const AppointmentEdit = () => {
             }
         };
         fetchData();
-    }, [id, navigate, enqueueSnackbar]);
+    }, [id, appointment, enqueueSnackbar, navigate]);
 
+    /**
+     * Handle PATCH update
+     */
     const handleSubmit = async (formData) => {
         try {
             setSaving(true);
 
-            // Calcular campos modificados
             const updates = Object.entries(formData).reduce((acc, [key, value]) => {
                 if (value !== appointment[key]) acc[key] = value;
                 return acc;
@@ -77,12 +85,23 @@ const AppointmentEdit = () => {
         }
     };
 
-    if (loading)
+    /**
+     * Loading state
+     */
+    if (loading || !appointment) {
         return (
             <Stack alignItems="center" justifyContent="center" mt={4}>
                 <CircularProgress />
             </Stack>
         );
+    }
+
+    /**
+     * Custom cancel action — return to appointment detail
+     */
+    const handleCancel = () => {
+        navigate(`/appointments/${id}`);
+    };
 
     return (
         <Stack spacing={2}>
@@ -93,6 +112,7 @@ const AppointmentEdit = () => {
                 initialValues={appointment}
                 onSubmit={handleSubmit}
                 saving={saving}
+                onCancel={handleCancel} // ✅ se pasa esta prop al formulario
             />
         </Stack>
     );

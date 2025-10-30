@@ -11,23 +11,20 @@ export const useAppointmentFormData = (initialValues) => {
   const [owners, setOwners] = useState([]);
   const [vets, setVets] = useState([]);
   const [pets, setPets] = useState([]);
-  const [loadingPreset, setLoadingPreset] = useState(false);
+  const [loadingPreset, setLoadingPreset] = useState(true);
 
-  // Load veterinarians and owners (convert IDs to strings)
   useEffect(() => {
-    (async () => {
+    const loadData = async () => {
       try {
         const [ownersData, vetsData] = await Promise.all([
           getOwners(),
           getAllUsers(),
         ]);
 
-        const mappedOwners = (ownersData?.content || ownersData || []).map(
-          (o) => ({
-            ...o,
-            id: String(o.id),
-          })
-        );
+        const mappedOwners = (ownersData?.content || ownersData || []).map((o) => ({
+          ...o,
+          id: String(o.id),
+        }));
 
         const mappedVets = (vetsData?.content || vetsData || []).map((v) => ({
           ...v,
@@ -36,56 +33,39 @@ export const useAppointmentFormData = (initialValues) => {
 
         setOwners(mappedOwners);
         setVets(mappedVets);
-      } catch (error) {
-        console.error("Error loading owners or vets:", error);
-      }
-    })();
-  }, []);
 
-  // Load pets when selecting an owner (convert IDs to strings)
-  useEffect(() => {
-    if (initialValues?.ownerId) {
-      (async () => {
-        try {
+        // If an ownerId is provided in initialValues, load their pets
+        if (initialValues?.ownerId) {
           const petList = await getPetsByOwnerId(initialValues.ownerId);
           const mappedPets = (petList || []).map((p) => ({
             ...p,
             id: String(p.id),
           }));
           setPets(mappedPets);
-        } catch (error) {
-          console.error("Error loading pets:", error);
         }
-      })();
-    }
-  }, [initialValues?.ownerId]);
 
-  // Load prefilled pet (if petId param exists in URL)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const petId = params.get("petId");
+        // If a petId is provided in the URL params, load that pet and its owner's pets
+        const params = new URLSearchParams(window.location.search);
+        const petId = params.get("petId");
 
-    if (petId) {
-      setLoadingPreset(true);
-      (async () => {
-        try {
+        if (petId) {
           const pet = await getPetById(petId);
           const petList = await getPetsByOwnerId(pet.ownerId);
-
           const mappedPets = (petList || []).map((p) => ({
             ...p,
             id: String(p.id),
           }));
-
           setPets(mappedPets);
-        } catch (error) {
-          console.error("Error loading preset pet:", error);
-        } finally {
-          setLoadingPreset(false);
         }
-      })();
-    }
-  }, []);
+      } catch (error) {
+        console.error("Error loading form data:", error);
+      } finally {
+        setLoadingPreset(false);
+      }
+    };
+
+    loadData();
+  }, [initialValues?.ownerId]);
 
   return { owners, vets, pets, loadingPreset, setPets };
 };

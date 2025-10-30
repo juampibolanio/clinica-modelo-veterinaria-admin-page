@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     Box,
     Stack,
@@ -12,87 +12,84 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
-import PetsIcon from "@mui/icons-material/PetsRounded";
+import PetsIcon from "@mui/icons-material/Pets";
+import PersonIcon from "@mui/icons-material/PersonRounded";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import dayjs from "dayjs";
+import { getPetById, getPetsByOwnerId } from "../api/pets.api";
 import { getOwnerById } from "../../owners/api/owners.api";
-import { getPetsByOwnerId } from "../../pets/api/pets.api";
 import { listAppointments } from "../../appointments/api/appointments.api";
-import { SectionList } from "../components/SectionList";
-
+import { SectionList } from "../../pets/components/SectionList";
 import { STATUS_COLOR, formatStatus } from "../../appointments/utils/utils";
 
 /**
- * OwnerDetail
- * Displays owner information, their pets, and recent appointments.
+ * PetDetail
+ * Displays pet information, its owner and recent appointments.
  */
-const OwnerDetail = () => {
-    const { id } = useParams();
+const PetDetail = () => {
+    const { id } = useParams(); // pet ID
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
 
+    const [pet, setPet] = useState(null);
     const [owner, setOwner] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    const [pets, setPets] = useState([]);
+    const [relatedPets, setRelatedPets] = useState([]);
     const [appointments, setAppointments] = useState([]);
 
-    const [loadingPets, setLoadingPets] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [loadingRelated, setLoadingRelated] = useState(true);
     const [loadingAppointments, setLoadingAppointments] = useState(true);
 
-    // ==============================
-    // Data Fetchers
-    // ==============================
-    const fetchOwner = async () => {
-        try {
-            const data = await getOwnerById(id);
-            setOwner(data);
-        } catch {
-            enqueueSnackbar("Error al cargar la información del dueño", { variant: "error" });
-            navigate("/owners");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchPets = async () => {
-        try {
-            setLoadingPets(true);
-            const data = await getPetsByOwnerId(id);
-            setPets(data || []);
-        } finally {
-            setLoadingPets(false);
-        }
-    };
-
-    const fetchAppointments = async () => {
-        try {
-            setLoadingAppointments(true);
-            const data = await listAppointments({
-                ownerId: id,
-                page: 0,
-                size: 5,
-                sortBy: "date",
-                direction: "desc",
-            });
-            setAppointments(data.content || []);
-        } finally {
-            setLoadingAppointments(false);
-        }
-    };
-
+    /**
+     * Fetch data for the pet, its owner and related info
+     */
     useEffect(() => {
-        fetchOwner();
-        fetchPets();
-        fetchAppointments();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+        const fetchData = async () => {
+            try {
+                const petData = await getPetById(id);
+                setPet(petData);
 
-    // ==============================
-    // UI
-    // ==============================
+                const ownerId = petData.owner?.id || petData.ownerId;
+                if (!ownerId) {
+                    throw new Error("El ID del dueño no está disponible");
+                }
+
+                const ownerData = await getOwnerById(ownerId);
+                setOwner(ownerData);
+
+                const petsData = await getPetsByOwnerId(ownerId);
+                setRelatedPets(petsData || []);
+
+                const appointmentsData = await listAppointments({
+                    petId: id,
+                    page: 0,
+                    size: 5,
+                    sortBy: "date",
+                    direction: "desc",
+                });
+                setAppointments(appointmentsData.content || []);
+            } catch (error) {
+                console.error("Error al cargar datos de la mascota:", error);
+                enqueueSnackbar("Error al cargar la información de la mascota", {
+                    variant: "error",
+                });
+                navigate("/pets");
+            } finally {
+                setLoading(false);
+                setLoadingRelated(false);
+                setLoadingAppointments(false);
+            }
+        };
+
+        fetchData();
+    }, [id, enqueueSnackbar, navigate]);
+
+
+    /**
+     * Loading state
+     */
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
@@ -101,37 +98,37 @@ const OwnerDetail = () => {
         );
     }
 
-    if (!owner) return null;
+    if (!pet) return null;
 
     return (
         <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 } }}>
-            {/*  Header  */}
+            {/* Header */}
             <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                 <Button
                     startIcon={<ArrowBackIcon />}
                     variant="outlined"
                     color="secondary"
-                    onClick={() => navigate("/owners")}
+                    onClick={() => navigate("/pets")}
                 >
                     Volver
                 </Button>
 
                 <Typography variant="h4" fontWeight={800}>
-                    Detalle del dueño
+                    Detalle de la mascota
                 </Typography>
 
                 <Button
                     variant="contained"
                     color="primary"
                     startIcon={<EditIcon />}
-                    onClick={() => navigate(`/owners/${id}/edit`)}
+                    onClick={() => navigate(`/pets/${id}/edit`)}
                     sx={{ ml: "auto" }}
                 >
                     Editar
                 </Button>
             </Stack>
 
-            {/*  General Information  */}
+            {/* General Info */}
             <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
                     Información general
@@ -140,16 +137,24 @@ const OwnerDetail = () => {
 
                 <Grid container spacing={2}>
                     {[
-                        { label: "Nombre", value: owner.name },
-                        { label: "Apellido", value: owner.surname },
-                        { label: "Email", value: owner.email },
-                        { label: "Teléfono", value: owner.phoneNumber },
-                        { label: "Documento", value: owner.documentNumber },
+                        { label: "Nombre", value: pet.name },
+                        { label: "Especie", value: pet.species },
+                        { label: "Raza", value: pet.breed || "-" },
                         {
-                            label: "Deuda",
-                            value: owner.debt
-                                ? `$${Number(owner.debt).toFixed(2)}`
-                                : "$0.00",
+                            label: "Género",
+                            value:
+                                pet.gender === "MALE"
+                                    ? "Macho"
+                                    : pet.gender === "FEMALE"
+                                        ? "Hembra"
+                                        : "-",
+                        },
+                        { label: "Peso (kg)", value: pet.weight ? `${pet.weight} kg` : "-" },
+                        {
+                            label: "Fecha de nacimiento",
+                            value: pet.birthDate
+                                ? dayjs(pet.birthDate).format("DD/MM/YYYY")
+                                : "-",
                         },
                     ].map((item) => (
                         <Grid key={item.label} item xs={12} sm={6} md={4}>
@@ -162,15 +167,41 @@ const OwnerDetail = () => {
                 </Grid>
             </Paper>
 
-            {/*  Pets Section  */}
+            {/* Owner Section */}
+            {owner && (
+                <SectionList
+                    icon={<PersonIcon color="primary" />}
+                    title="Dueño"
+                    items={[owner]}
+                    loading={false}
+                    emptyText="No se encontró información del dueño."
+                    renderItem={(o) => (
+                        <>
+                            <Typography sx={{ minWidth: 160, fontWeight: 700 }}>
+                                {o.name} {o.surname}
+                            </Typography>
+                            <Typography sx={{ minWidth: 160 }}>{o.email}</Typography>
+                            <Typography sx={{ minWidth: 140 }}>{o.phoneNumber}</Typography>
+                            <Button
+                                size="small"
+                                onClick={() => navigate(`/owners/${o.id}`)}
+                            >
+                                Ver detalle
+                            </Button>
+                        </>
+                    )}
+                />
+            )}
+
+            {/* Related Pets */}
             <SectionList
                 icon={<PetsIcon color="primary" />}
-                title="Mascotas"
-                items={pets}
-                loading={loadingPets}
-                emptyText="Este dueño no tiene mascotas registradas."
+                title="Otras mascotas del dueño"
+                items={relatedPets.filter((p) => p.id !== pet.id)}
+                loading={loadingRelated}
+                emptyText="No hay otras mascotas registradas."
                 createLabel="Nueva mascota"
-                onCreate={() => navigate(`/pets/create?ownerId=${id}`)}
+                onCreate={() => navigate(`/pets/create?ownerId=${owner?.id}`)}
                 renderItem={(p) => (
                     <>
                         <Typography sx={{ minWidth: 160, fontWeight: 700 }}>
@@ -189,25 +220,24 @@ const OwnerDetail = () => {
                         <Typography flex={1}>
                             {p.weight ? `${p.weight} kg` : "-"}
                         </Typography>
-                        <Button
-                            size="small"
-                            onClick={() => navigate(`/pets/${p.id}`)}
-                        >
+                        <Button size="small" onClick={() => navigate(`/pets/${p.id}`)}>
                             Ver
                         </Button>
                     </>
                 )}
             />
 
-            {/*  Appointments Section  */}
+            {/* Appointments Section */}
             <SectionList
                 icon={<CalendarMonthIcon color="primary" />}
                 title="Turnos recientes"
                 items={appointments}
                 loading={loadingAppointments}
-                emptyText="No hay turnos registrados para este dueño."
+                emptyText="No hay turnos registrados para esta mascota."
                 createLabel="Nuevo turno"
-                onCreate={() => navigate(`/appointments/create?ownerId=${id}`)}
+                onCreate={() =>
+                    navigate(`/appointments/create?ownerId=${owner?.id}&petId=${pet.id}`)
+                }
                 renderItem={(a) => (
                     <>
                         <Typography sx={{ minWidth: 120 }}>
@@ -232,4 +262,4 @@ const OwnerDetail = () => {
     );
 };
 
-export default OwnerDetail;
+export default PetDetail;

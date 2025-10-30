@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
     Grid,
     TextField,
@@ -6,6 +6,7 @@ import {
     Stack,
     Button,
     CircularProgress,
+    Typography,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { getAllUsers } from "../../users/api/users.api";
@@ -14,24 +15,33 @@ import { listClinicalHistory } from "../../clinical-history/api/clinical-history
 import { useAuth } from "../../auth/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
-const empty = {
-    petId: "",
-    veterinarianId: "",
-    productId: "",
-    clinicalHistoryId: "",
-    date: dayjs().format("YYYY-MM-DD"),
-    observations: "",
-};
-
+/**
+ * AppliedVaccineForm
+ * Handles creation and edition of applied vaccines.
+ */
 const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [form, setForm] = useState(empty);
+
+    // ==============================
+    // State
+    // ==============================
+    const [form, setForm] = useState({
+        petId: "",
+        veterinarianId: "",
+        productId: "",
+        clinicalHistoryId: "",
+        date: dayjs().format("YYYY-MM-DD"),
+        observations: "",
+    });
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
     const [histories, setHistories] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
+    // ==============================
+    // Effects - Initialize form
+    // ==============================
     useEffect(() => {
         setForm((prev) => ({
             ...prev,
@@ -41,17 +51,20 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
         }));
     }, [initialValues, petId, user]);
 
+    // ==============================
+    // Effects - Load data
+    // ==============================
     useEffect(() => {
         const fetchData = async () => {
-            setLoading(true);
             try {
+                setLoading(true);
+
                 const [usersRes, productsRes, historiesRes] = await Promise.all([
                     getAllUsers(),
                     getProducts(),
                     listClinicalHistory({ petId }),
                 ]);
 
-                // 🔹 Solo productos categoría "Vacunas"
                 const allProducts = productsRes.content || productsRes;
                 const vaccineProducts = allProducts.filter(
                     (p) =>
@@ -62,6 +75,8 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                 setUsers(usersRes);
                 setProducts(vaccineProducts);
                 setHistories(historiesRes.content || historiesRes);
+            } catch (err) {
+                console.error("Error loading applied vaccine form data:", err);
             } finally {
                 setLoading(false);
             }
@@ -69,9 +84,12 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
         fetchData();
     }, [petId]);
 
+    // ==============================
+    // Handlers
+    // ==============================
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setForm((f) => ({ ...f, [name]: value }));
+        setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = (e) => {
@@ -79,6 +97,12 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
         onSubmit?.(form);
     };
 
+    const vaccineOptions = useMemo(() => products.length > 0, [products]);
+    const historyOptions = useMemo(() => histories.length > 0, [histories]);
+
+    // ==============================
+    // Render
+    // ==============================
     return (
         <form onSubmit={handleSubmit}>
             <Grid container spacing={2}>
@@ -96,7 +120,7 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                     />
                 </Grid>
 
-                {/* Producto */}
+                {/* Producto (vacuna) */}
                 <Grid item xs={12} md={4}>
                     <TextField
                         select
@@ -108,17 +132,14 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                         required
                         disabled={loading}
                     >
-                        {products.length === 0 ? (
-                            <MenuItem disabled>
-                                No hay productos de categoría “Vacunas”
-                            </MenuItem>
-                        ) : (
-                            products.map((p) => (
-                                <MenuItem key={p.id} value={p.id}>
-                                    {p.name} — Stock: {p.stock}
-                                </MenuItem>
-                            ))
+                        {!vaccineOptions && (
+                            <MenuItem disabled>No hay vacunas disponibles</MenuItem>
                         )}
+                        {products.map((p) => (
+                            <MenuItem key={p.id} value={p.id}>
+                                {p.name} — Stock: {p.stock}
+                            </MenuItem>
+                        ))}
                     </TextField>
                 </Grid>
 
@@ -134,9 +155,12 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                         required
                         disabled={loading}
                     >
+                        {!historyOptions && (
+                            <MenuItem disabled>No hay historias clínicas disponibles</MenuItem>
+                        )}
                         {histories.map((h) => (
                             <MenuItem key={h.id} value={h.id}>
-                                {dayjs(h.date).format("DD/MM/YYYY")} – {h.consultationType}
+                                {dayjs(h.date).format("DD/MM/YYYY")} — {h.consultationType}
                             </MenuItem>
                         ))}
                     </TextField>
@@ -175,13 +199,14 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                     />
                 </Grid>
 
-                {/* ✅ Botones Guardar / Cancelar */}
+                {/* Actions */}
                 <Grid item xs={12}>
                     <Stack direction="row" justifyContent="flex-end" spacing={2}>
                         <Button
                             variant="outlined"
                             color="secondary"
                             onClick={() => navigate(-1)}
+                            disabled={saving}
                         >
                             Cancelar
                         </Button>
@@ -190,15 +215,23 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                             variant="contained"
                             disabled={saving}
                         >
-                            {saving ? "Guardando..." : "Guardar"}
+                            {saving ? (
+                                <CircularProgress size={22} color="inherit" />
+                            ) : (
+                                "Guardar"
+                            )}
                         </Button>
                     </Stack>
                 </Grid>
             </Grid>
 
+            {/* Loader general */}
             {loading && (
-                <Stack direction="row" justifyContent="center" mt={2}>
-                    <CircularProgress size={28} />
+                <Stack alignItems="center" mt={3}>
+                    <CircularProgress size={30} />
+                    <Typography variant="body2" mt={1}>
+                        Cargando datos...
+                    </Typography>
                 </Stack>
             )}
         </form>

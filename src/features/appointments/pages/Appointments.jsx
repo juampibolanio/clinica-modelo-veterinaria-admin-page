@@ -11,27 +11,29 @@ import { toISOFromBackend } from "../utils/utils";
 
 /**
  * Appointments page
- *  Renders the appointments page, including a calendar, sidebar, 
- *  filters, and a confirmation dialog for deletions.
+ * Renders the appointments page, including a calendar, sidebar,
+ * filters, and a confirmation dialog for deletions.
  */
 const Appointments = () => {
     const navigate = useNavigate();
+
     const {
         filters,
         setFilters,
         vets,
-        pageData,
+        appointments,
         loading,
         fetchAppointments,
-        removeAppointment,
+        handleDeleteAppointment,
     } = useAppointmentsData();
 
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
 
+    // Convert backend appointments to FullCalendar event format
     const events = useMemo(
         () =>
-            (pageData?.content || []).map((a) => ({
+            (appointments || []).map((a) => ({
                 id: String(a.id),
                 title: `${a.petName} • ${a.veterinarianName}${a.reason ? " • " + a.reason : ""
                     }`,
@@ -39,15 +41,14 @@ const Appointments = () => {
                 end: toISOFromBackend(a.date, a.time),
                 extendedProps: a,
             })),
-        [pageData]
+        [appointments]
     );
 
     const todayStr = dayjs().format("YYYY-MM-DD");
     const tomorrowStr = dayjs().add(1, "day").format("YYYY-MM-DD");
-    const todayList = (pageData?.content || []).filter((a) => a.date === todayStr);
-    const tomorrowList = (pageData?.content || []).filter(
-        (a) => a.date === tomorrowStr
-    );
+
+    const todayList = (appointments || []).filter((a) => a.date === todayStr);
+    const tomorrowList = (appointments || []).filter((a) => a.date === tomorrowStr);
 
     const handleDateSelect = (selInfo) => {
         const date = dayjs(selInfo.startStr).format("YYYY-MM-DD");
@@ -66,10 +67,10 @@ const Appointments = () => {
     };
 
     const confirmDelete = async () => {
-        await removeAppointment(selectedId);
+        await handleDeleteAppointment(selectedId);
         setConfirmOpen(false);
     };
-
+    
     return (
         <Stack spacing={2}>
             {/* Header */}
@@ -105,6 +106,7 @@ const Appointments = () => {
                 />
             </Stack>
 
+            {/* Confirm delete dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar turno"

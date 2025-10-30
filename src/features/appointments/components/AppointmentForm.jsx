@@ -30,7 +30,10 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
     const { owners, vets, pets, setPets, loadingPreset } =
         useAppointmentFormData(initialValues);
 
-    // Normalize numeric IDs to strings before initializing form
+    // Wait until owners and vets are loaded
+    const isDataReady = owners.length > 0 && vets.length > 0;
+
+    // Normalize IDs to strings for form compatibility
     const normalizedInitialValues = useMemo(
         () => ({
             ...initialValues,
@@ -43,11 +46,10 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
         [initialValues]
     );
 
-    // Initialize React Hook Form with Zod validation
+    // Initialize React Hook Form
     const {
         register,
         handleSubmit,
-        setValue,
         watch,
         formState: { errors, isValid },
     } = useForm({
@@ -68,7 +70,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
 
     const ownerId = watch("ownerId");
 
-    // 🔹 Update pet list dynamically when owner changes
+    // Update pets when ownerId changes
     useEffect(() => {
         if (ownerId) {
             (async () => {
@@ -84,12 +86,12 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
         }
     }, [ownerId, setPets]);
 
-    // 🔹 Form submit handler
     const handleFormSubmit = (data) => {
         onSubmit?.(data);
     };
 
-    if (loadingPreset)
+    // Show loader until data is ready
+    if (!isDataReady || loadingPreset)
         return (
             <Stack alignItems="center" mt={4}>
                 <CircularProgress />
@@ -128,7 +130,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     />
                 </Grid>
 
-                {/* Status */}
+                {/* State */}
                 <Grid item xs={12} sm={6} md={4}>
                     <TextField
                         select
@@ -195,7 +197,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                         error={!!errors.petId}
                         helperText={errors.petId?.message}
                         required
-                        disabled={!ownerId && !initialValues.petId} 
+                        disabled={!ownerId && !initialValues.petId}
                     >
                         {pets.map((p) => (
                             <MenuItem key={p.id} value={p.id}>
@@ -205,8 +207,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     </TextField>
                 </Grid>
 
-
-                {/* Reason */}
+                {/* Motivation */}
                 <Grid item xs={12} md={6}>
                     <TextField
                         label="Motivo"
@@ -243,9 +244,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                             onClick={() => navigate(-1)}
                             fullWidth={true}
                             sx={{
-                                "@media (min-width:600px)": {
-                                    width: "auto",
-                                },
+                                "@media (min-width:600px)": { width: "auto" },
                             }}
                         >
                             Cancelar
@@ -256,9 +255,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                             disabled={!isValid || saving}
                             fullWidth={true}
                             sx={{
-                                "@media (min-width:600px)": {
-                                    width: "auto",
-                                },
+                                "@media (min-width:600px)": { width: "auto" },
                             }}
                         >
                             {saving ? <CircularProgress size={22} /> : "Guardar"}

@@ -30,7 +30,9 @@ const AppointmentDetail = () => {
     const [loading, setLoading] = useState(true);
     const [confirmOpen, setConfirmOpen] = useState(false);
 
-    // Fetch appointment detail
+    /**
+     * Fetch appointment detail from backend
+     */
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -47,7 +49,9 @@ const AppointmentDetail = () => {
         fetchData();
     }, [id, enqueueSnackbar, navigate]);
 
-    // Delete appointment
+    /**
+     * Handle appointment deletion
+     */
     const handleDelete = async () => {
         try {
             await deleteAppointment(id);
@@ -61,7 +65,9 @@ const AppointmentDetail = () => {
         }
     };
 
-    // Loading state
+    /**
+     * Loading state
+     */
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight={240}>
@@ -101,12 +107,14 @@ const AppointmentDetail = () => {
                 </Typography>
 
                 <Stack direction="row" spacing={1} flexWrap="wrap">
+                    {/* ✅ Pasa el turno completo al editar */}
                     <Button
                         variant="outlined"
-                        onClick={() => navigate(`/appointments/${id}/edit`)}
+                        onClick={() => navigate(`/appointments/${id}/edit`, { state: { appointment } })}
                     >
                         Editar
                     </Button>
+
                     <Button
                         color="error"
                         variant="contained"
@@ -187,7 +195,7 @@ const AppointmentDetail = () => {
                 </Grid>
             </Paper>
 
-            {/* Delete confirm */}
+            {/* Delete confirm dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar turno"

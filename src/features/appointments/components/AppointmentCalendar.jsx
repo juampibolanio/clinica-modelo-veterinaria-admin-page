@@ -42,7 +42,7 @@ const AppointmentCalendar = ({
                     { daysOfWeek: [6], startTime: "09:00", endTime: "12:30" },
                     { daysOfWeek: [6], startTime: "18:00", endTime: "20:00" },
                 ]}
-                weekends={false}
+                weekends={true}
                 slotMinTime="08:00:00"
                 slotMaxTime="21:00:00"
                 allDaySlot={false}

@@ -5,10 +5,10 @@ import {
     Typography,
     Button,
     TextField,
-    MenuItem,
     Paper,
     Pagination,
     Divider,
+    CircularProgress,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -19,11 +19,18 @@ import {
 } from "../api/applied-vaccines.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 
+/**
+ * AppliedVaccineList
+ * Displays all applied vaccines with filtering and pagination.
+ */
 const AppliedVaccineList = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { enqueueSnackbar } = useSnackbar();
 
+    // ==============================
+    // State
+    // ==============================
     const params = new URLSearchParams(location.search);
     const petIdFromQuery = params.get("petId");
 
@@ -44,12 +51,16 @@ const AppliedVaccineList = () => {
         direction: "desc",
     });
 
+    // ==============================
+    // Fetch data
+    // ==============================
     const fetchData = async () => {
         try {
             setLoading(true);
             const data = await listAppliedVaccines(filters);
             setPageData(data);
-        } catch {
+        } catch (err) {
+            console.error("Error loading applied vaccines:", err);
             enqueueSnackbar("Error al cargar vacunas aplicadas", { variant: "error" });
         } finally {
             setLoading(false);
@@ -61,6 +72,9 @@ const AppliedVaccineList = () => {
         // eslint-disable-next-line
     }, [filters.page, filters.size, filters.sortBy, filters.direction]);
 
+    // ==============================
+    // Handlers
+    // ==============================
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilters((f) => ({ ...f, [name]: value, page: 0 }));
@@ -76,45 +90,53 @@ const AppliedVaccineList = () => {
     const handleConfirmDelete = async () => {
         try {
             await deleteAppliedVaccine(selectedId);
-            enqueueSnackbar("Vacuna eliminada correctamente", { variant: "success" });
+            enqueueSnackbar("Vacuna eliminada correctamente ✅", { variant: "success" });
             fetchData();
-        } catch {
+        } catch (err) {
+            console.error("Error deleting applied vaccine:", err);
             enqueueSnackbar("Error al eliminar la vacuna", { variant: "error" });
         } finally {
             setConfirmOpen(false);
         }
     };
 
+    // ==============================
+    // Render
+    // ==============================
     return (
         <Stack spacing={2}>
             {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={1}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap">
                 <Typography variant="h4" fontWeight={800}>
-                    Vacunas Aplicadas
+                    Vacunas aplicadas
                 </Typography>
+
             </Stack>
 
-            {/* Filtros */}
+            {/* Filters */}
             <Paper sx={{ p: 2, borderRadius: 2 }}>
-                <Stack direction="row" gap={2} flexWrap="wrap">
+                <Stack direction="row" gap={2} flexWrap="wrap" alignItems="center">
                     <TextField
                         label="ID Mascota"
                         name="petId"
                         value={filters.petId}
                         onChange={handleFilterChange}
                         disabled={!!petIdFromQuery}
+                        size="small"
                     />
                     <TextField
                         label="ID Veterinario"
                         name="veterinarianId"
                         value={filters.veterinarianId}
                         onChange={handleFilterChange}
+                        size="small"
                     />
                     <TextField
                         label="ID Producto"
                         name="productId"
                         value={filters.productId}
                         onChange={handleFilterChange}
+                        size="small"
                     />
                     <TextField
                         type="date"
@@ -123,6 +145,7 @@ const AppliedVaccineList = () => {
                         value={filters.fromDate}
                         onChange={handleFilterChange}
                         InputLabelProps={{ shrink: true }}
+                        size="small"
                     />
                     <TextField
                         type="date"
@@ -131,6 +154,7 @@ const AppliedVaccineList = () => {
                         value={filters.toDate}
                         onChange={handleFilterChange}
                         InputLabelProps={{ shrink: true }}
+                        size="small"
                     />
                     <Button variant="outlined" onClick={handleSearch}>
                         Aplicar
@@ -138,9 +162,10 @@ const AppliedVaccineList = () => {
                 </Stack>
             </Paper>
 
-            {/* Tabla */}
-            <Paper sx={{ p: 0, borderRadius: 2, overflow: "hidden" }}>
+            {/* Table */}
+            <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
                 <Box sx={{ p: 2 }}>
+                    {/* Table header */}
                     <Stack direction="row" sx={{ fontWeight: 700 }}>
                         <Box flex={1}>Fecha</Box>
                         <Box flex={1}>Mascota</Box>
@@ -154,9 +179,17 @@ const AppliedVaccineList = () => {
                 </Box>
                 <Divider />
 
-                {loading && <Box p={2}>Cargando...</Box>}
+                {/* Table body */}
+                {loading && (
+                    <Box p={3} textAlign="center">
+                        <CircularProgress size={28} />
+                    </Box>
+                )}
+
                 {!loading && pageData?.content?.length === 0 && (
-                    <Box p={2}>Sin resultados</Box>
+                    <Box p={2} textAlign="center" color="text.secondary">
+                        No hay resultados disponibles.
+                    </Box>
                 )}
 
                 {!loading &&
@@ -167,19 +200,22 @@ const AppliedVaccineList = () => {
                                     p: 2,
                                     display: "flex",
                                     alignItems: "center",
+                                    "&:hover": { backgroundColor: "action.hover" },
                                 }}
                             >
                                 <Box flex={1}>
                                     {row.date ? dayjs(row.date).format("DD/MM/YYYY") : "-"}
                                 </Box>
-                                <Box flex={1}>{row.petName}</Box>
-                                <Box flex={1.5}>{row.productName}</Box>
-                                <Box flex={1.5}>{row.veterinarianName}</Box>
-                                <Box flex={2}>{row.observations || "-"}</Box>
+                                <Box flex={1}>{row.petName || "—"}</Box>
+                                <Box flex={1.5}>{row.productName || "—"}</Box>
+                                <Box flex={1.5}>{row.veterinarianName || "—"}</Box>
+                                <Box flex={2}>{row.observations || "—"}</Box>
                                 <Box width={180} textAlign="right">
                                     <Button
                                         size="small"
-                                        onClick={() => navigate(`/applied-vaccines/${row.id}`)}
+                                        onClick={() =>
+                                            navigate(`/applied-vaccines/${row.id}`)
+                                        }
                                     >
                                         Ver
                                     </Button>
@@ -204,7 +240,8 @@ const AppliedVaccineList = () => {
                         </Box>
                     ))}
 
-                {pageData && (
+                {/* Pagination */}
+                {pageData && pageData.totalPages > 1 && (
                     <Stack alignItems="center" p={2}>
                         <Pagination
                             page={pageData.number + 1}
@@ -217,7 +254,7 @@ const AppliedVaccineList = () => {
                 )}
             </Paper>
 
-            {/* ConfirmDialog */}
+            {/* Confirm delete dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar vacuna aplicada"
