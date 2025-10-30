@@ -17,9 +17,10 @@ import VaccinesIcon from "@mui/icons-material/VaccinesRounded";
 
 import NavItem from "../common/NavItem";
 import logo from "../../assets/favicon.svg";
+import { sidebarStyles } from "./styles/sidebar.styles";
 
 /**
- * * Sidebar component that provides navigation links and user actions.
+ * Sidebar component that provides navigation links and user actions.
  * @param {function} onClose - Function to be called when the sidebar needs to be closed (for mobile view).
  * @returns {JSX.Element} The Sidebar component.
  */
@@ -37,14 +38,13 @@ const Sidebar = ({ onClose }) => {
 
   // Main menu
   const navItems = [
-    { label: "Dashboard", icon: <DashboardIcon />, path: "/" },
+    { label: "Inicio", icon: <DashboardIcon />, path: "/" },
     { label: "Blog", icon: <ArticleIcon />, path: "/blog" },
     { label: "Clientes", icon: <PeopleIcon />, path: "/owners" },
     { label: "Pacientes", icon: <PetsIcon />, path: "/pets" },
     { label: "Turnos", icon: <EventIcon />, path: "/appointments" },
     { label: "Historias Clínicas", icon: <FeedIcon />, path: "/clinical-history" },
     { label: "Vacunación", icon: <VaccinesIcon />, path: "/applied-vaccines" },
-
     {
       label: "Productos",
       icon: <InventoryIcon />,
@@ -53,7 +53,6 @@ const Sidebar = ({ onClose }) => {
         { label: "Productos", path: "/products" },
       ],
     },
-
     { label: "Reportes", icon: <BarChartIcon />, path: "/reports" },
   ];
 
@@ -67,33 +66,40 @@ const Sidebar = ({ onClose }) => {
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <Box sx={sidebarStyles.container}>
       {/* Header */}
-      <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 1 }}>
-        <img src={logo} alt="Logo" width={32} height={32} />
-        <Typography variant="h6" fontWeight={700}>
+      <Box sx={sidebarStyles.header}>
+        <Box
+          component="img"
+          src={logo}
+          alt="Logo"
+          sx={sidebarStyles.logo}
+        />
+        <Typography variant="h6" sx={sidebarStyles.headerTitle}>
           Clínica Modelo
         </Typography>
       </Box>
 
-      <Divider />
+      <Divider sx={sidebarStyles.divider} />
 
-      {/* Navegation */}
-      <List sx={{ flexGrow: 1 }}>
+      {/* Navigation */}
+      <List sx={sidebarStyles.navList}>
         {navItems.map((item) => (
           <NavItem key={item.label} {...item} onClick={onClose} />
         ))}
       </List>
 
-      <Divider />
+      <Divider sx={sidebarStyles.divider} />
 
       {/* Logout */}
-      <NavItem
-        label="Cerrar sesión"
-        icon={<LogoutIcon />}
-        onClick={handleLogout}
-        color="error"
-      />
+      <Box sx={sidebarStyles.logoutSection}>
+        <NavItem
+          label="Cerrar sesión"
+          icon={<LogoutIcon />}
+          onClick={handleLogout}
+          color="error"
+        />
+      </Box>
     </Box>
   );
 };

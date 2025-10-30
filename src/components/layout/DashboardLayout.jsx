@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Box, Drawer, Toolbar, useMediaQuery } from "@mui/material";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { Outlet } from "react-router-dom"; 
+import { Outlet } from "react-router-dom";
+import { dashboardLayoutStyles } from "./styles/dashboardLayout.styles";
 
-const drawerWidth = 240;
 
 /**
  * Dashboard layout component that includes a sidebar and topbar.
- * @return {JSX.Element} The dashboard layout component. 
+ * @return {JSX.Element} The dashboard layout component.
  */
 const DashboardLayout = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -17,9 +17,9 @@ const DashboardLayout = () => {
     const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
     return (
-        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+        <Box sx={dashboardLayoutStyles.container}>
             {/* Sidebar */}
-            <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+            <Box component="nav" sx={dashboardLayoutStyles.nav}>
                 {/* Mobile drawer */}
                 {!isDesktop && (
                     <Drawer
@@ -27,30 +27,18 @@ const DashboardLayout = () => {
                         open={mobileOpen}
                         onClose={handleDrawerToggle}
                         ModalProps={{ keepMounted: true }}
-                        sx={{
-                            "& .MuiDrawer-paper": {
-                                width: drawerWidth,
-                                bgcolor: "#fff",
-                            },
-                        }}
+                        sx={dashboardLayoutStyles.drawerMobile}
                     >
                         <Sidebar onClose={handleDrawerToggle} />
                     </Drawer>
                 )}
 
-                {/* Drawer desktop */}
+                {/* Desktop drawer */}
                 {isDesktop && (
                     <Drawer
                         variant="permanent"
                         open
-                        sx={{
-                            "& .MuiDrawer-paper": {
-                                width: drawerWidth,
-                                boxSizing: "border-box",
-                                bgcolor: "#fff",
-                                borderRight: "1px solid #E0E0E0",
-                            },
-                        }}
+                        sx={dashboardLayoutStyles.drawerDesktop}
                     >
                         <Sidebar />
                     </Drawer>
@@ -58,10 +46,10 @@ const DashboardLayout = () => {
             </Box>
 
             {/* Main content */}
-            <Box component="main" sx={{ flexGrow: 1, width: { md: `calc(100% - ${drawerWidth}px)` } }}>
+            <Box component="main" sx={dashboardLayoutStyles.main}>
                 <Topbar onMenuClick={handleDrawerToggle} />
                 <Toolbar />
-                <Box sx={{ p: { xs: 2, md: 3 } }}>
+                <Box sx={dashboardLayoutStyles.contentWrapper}>
                     <Outlet />
                 </Box>
             </Box>
