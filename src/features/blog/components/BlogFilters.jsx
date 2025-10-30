@@ -8,16 +8,21 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
+import { blogFiltersStyles } from "../styles/blogFilters.styles";
 
 const BlogFilters = React.memo(({ onChange }) => {
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
-    const [filters, setFilters] = useState({ keyword: "", fromDate: "", toDate: "" });
+    const [filters, setFilters] = useState({
+        keyword: "",
+        fromDate: "",
+        toDate: "",
+    });
 
     useEffect(() => {
         const timeout = setTimeout(() => onChange?.(filters), 350);
         return () => clearTimeout(timeout);
-    }, [filters]);
+    }, [filters, onChange]);
 
     const clearFilters = () => {
         const reset = { keyword: "", fromDate: "", toDate: "" };
@@ -30,8 +35,9 @@ const BlogFilters = React.memo(({ onChange }) => {
             direction={isSmall ? "column" : "row"}
             spacing={2}
             alignItems={isSmall ? "stretch" : "center"}
-            sx={{ width: "100%" }}
+            sx={blogFiltersStyles.container}
         >
+            {/* Search */}
             <TextField
                 placeholder="Buscar por título o subtítulo..."
                 value={filters.keyword}
@@ -45,32 +51,45 @@ const BlogFilters = React.memo(({ onChange }) => {
                 }}
                 fullWidth
                 size="small"
+                sx={blogFiltersStyles.searchField}
             />
-            <TextField
-                type="date"
-                label="Desde"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={filters.fromDate}
-                onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
-            />
-            <TextField
-                type="date"
-                label="Hasta"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={filters.toDate}
-                onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
-            />
-            <Button
-                variant="outlined"
-                color="secondary"
-                onClick={clearFilters}
-                size="small"
-                fullWidth={isSmall}
+
+            {/* Dates */}
+            <Stack
+                direction={isSmall ? "column" : "row"}
+                spacing={isSmall ? 1.5 : 2}
+                flexShrink={0}
             >
-                Limpiar
-            </Button>
+                <TextField
+                    type="date"
+                    label="Desde"
+                    size="small"
+                    InputLabelProps={{ shrink: true }}
+                    value={filters.fromDate}
+                    onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
+                    sx={blogFiltersStyles.dateField}
+                />
+
+                <TextField
+                    type="date"
+                    label="Hasta"
+                    size="small"
+                    InputLabelProps={{ shrink: true }}
+                    value={filters.toDate}
+                    onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
+                    sx={blogFiltersStyles.dateField}
+                />
+
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={clearFilters}
+                    size="small"
+                    sx={blogFiltersStyles.clearButton}
+                >
+                    Limpiar
+                </Button>
+            </Stack>
         </Stack>
     );
 });

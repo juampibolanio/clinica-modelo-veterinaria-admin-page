@@ -4,6 +4,7 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import BlogForm from "../components/BlogForm";
 import axios from "../../../libs/axios";
+import { blogCreateStyles } from "../styles/blogCreate.styles";
 
 const BlogCreate = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -24,9 +25,12 @@ const BlogCreate = () => {
   };
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="h4" fontWeight={800}>
+    <Stack sx={blogCreateStyles.container}>
+      <Typography variant="h4" sx={blogCreateStyles.title}>
         Nueva Publicación
+      </Typography>
+      <Typography sx={blogCreateStyles.subtitle}>
+        Crea una nueva entrada para el blog de la clínica
       </Typography>
       <BlogForm onSubmit={handleSubmit} submitting={loading} mode="create" />
     </Stack>

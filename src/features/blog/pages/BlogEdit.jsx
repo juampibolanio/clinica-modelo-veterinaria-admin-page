@@ -16,6 +16,8 @@ import DeleteIcon from "@mui/icons-material/DeleteOutline";
 import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPostById, patchPostUnified } from "../api/blog.api";
+import { blogEditStyles } from "../styles/blogEdit.styles";
+import { blogFormStyles } from "../styles/blogForm.styles";
 
 const MAX_IMAGES = 5;
 const MAX_SIZE_MB = 5;
@@ -34,6 +36,7 @@ const BlogEdit = () => {
     const [existingImages, setExistingImages] = useState([]);
     const [newImages, setNewImages] = useState([]);
 
+    // --- Load post data ---
     const loadPost = useCallback(async () => {
         try {
             setLoading(true);
@@ -50,12 +53,13 @@ const BlogEdit = () => {
         } finally {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, enqueueSnackbar, navigate]);
 
     useEffect(() => {
         loadPost();
     }, [loadPost]);
 
+    // --- Handle save ---
     const handleSave = async (e) => {
         e.preventDefault();
         if (!formData.title.trim() || !formData.content.trim()) {
@@ -83,13 +87,12 @@ const BlogEdit = () => {
         }
     };
 
+    // --- Handle image logic ---
     const handleAddImages = (e) => {
         const files = Array.from(e.target.files);
         e.target.value = null;
         const valid = files.filter(
-            (f) =>
-                ALLOWED_TYPES.includes(f.type) &&
-                f.size <= MAX_SIZE_MB * 1024 * 1024
+            (f) => ALLOWED_TYPES.includes(f.type) && f.size <= MAX_SIZE_MB * 1024 * 1024
         );
         if (existingImages.length + newImages.length + valid.length > MAX_IMAGES) {
             enqueueSnackbar(`Máximo ${MAX_IMAGES} imágenes`, { variant: "warning" });
@@ -98,39 +101,42 @@ const BlogEdit = () => {
         setNewImages((prev) => [...prev, ...valid]);
     };
 
-    const handleRemoveExisting = (id) =>
-        setExistingImages((prev) => prev.filter((img) => img.id !== id));
+    const handleRemoveExisting = (imageId) =>
+        setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
 
-    const handleRemoveNew = (i) =>
-        setNewImages((prev) => prev.filter((_, idx) => idx !== i));
+    const handleRemoveNew = (i) => setNewImages((prev) => prev.filter((_, idx) => idx !== i));
 
+    // --- Loading state ---
     if (loading)
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+            <Box sx={blogEditStyles.loadingBox}>
                 <CircularProgress />
             </Box>
         );
 
     return (
-        <Box component="form" onSubmit={handleSave} noValidate>
+        <Box component="form" onSubmit={handleSave} noValidate sx={blogEditStyles.container}>
             <Stack spacing={4}>
-                <Typography variant="h4" fontWeight={800}>
+                {/* Header */}
+                <Typography variant="h4" sx={blogEditStyles.title}>
                     Editar Publicación
                 </Typography>
 
                 {error && (
-                    <Alert severity="error" onClose={() => setError(null)}>
+                    <Alert severity="error" onClose={() => setError(null)} sx={blogEditStyles.alert}>
                         {error}
                     </Alert>
                 )}
 
+                {/* Form fields */}
                 <TextField
-                    label="Título"
+                    label="Título *"
                     name="title"
                     fullWidth
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     required
+                    sx={blogFormStyles.textField}
                 />
                 <TextField
                     label="Subtítulo"
@@ -138,123 +144,119 @@ const BlogEdit = () => {
                     fullWidth
                     value={formData.subtitle}
                     onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                    sx={blogFormStyles.textField}
                 />
                 <TextField
-                    label="Contenido"
+                    label="Contenido *"
                     name="content"
                     fullWidth
                     multiline
-                    minRows={6}
+                    minRows={10}
                     value={formData.content}
                     onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                     required
+                    sx={blogFormStyles.contentField}
                 />
 
-                <Divider />
+                {/* Divider */}
+                <Divider sx={blogEditStyles.divider} />
 
-                <Typography variant="h6" fontWeight={700}>
-                    Imágenes del post ({existingImages.length + newImages.length}/{MAX_IMAGES})
-                </Typography>
+                {/* Image Section */}
+                <Stack spacing={3}>
+                    <Stack sx={blogEditStyles.sectionHeader}>
+                        <Typography sx={blogEditStyles.sectionTitle}>
+                            Imágenes del artículo
+                        </Typography>
+                        <Typography sx={blogEditStyles.imageCounter}>
+                            {existingImages.length + newImages.length} / {MAX_IMAGES}
+                        </Typography>
+                    </Stack>
 
-                <Grid container spacing={2}>
-                    {existingImages.map((img) => (
-                        <Grid item xs={12} sm={6} md={4} key={img.id}>
-                            <Box sx={{ position: "relative" }}>
-                                <img
-                                    src={img.url}
-                                    alt=""
-                                    style={{
-                                        width: "100%",
-                                        height: 140,
-                                        objectFit: "cover",
-                                        borderRadius: 8,
-                                    }}
-                                />
-                                <IconButton
-                                    size="small"
-                                    onClick={() => handleRemoveExisting(img.id)}
-                                    sx={{
-                                        position: "absolute",
-                                        top: 8,
-                                        right: 8,
-                                        bgcolor: "error.main",
-                                        color: "white",
-                                        "&:hover": { bgcolor: "error.dark" },
-                                    }}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                                <TextField
-                                    size="small"
-                                    fullWidth
-                                    label="Descripción"
-                                    value={img.description || ""}
-                                    onChange={(e) =>
-                                        setExistingImages((prev) =>
-                                            prev.map((im) =>
-                                                im.id === img.id ? { ...im, description: e.target.value } : im
+                    <Grid container spacing={2}>
+                        {existingImages.map((img) => (
+                            <Grid item xs={12} sm={6} md={4} key={img.id}>
+                                <Box sx={blogFormStyles.imageBox}>
+                                    <img src={img.url} alt="" style={blogFormStyles.imagePreview} />
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleRemoveExisting(img.id)}
+                                        sx={blogFormStyles.deleteImageButton}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                    <TextField
+                                        size="small"
+                                        fullWidth
+                                        label="Descripción"
+                                        value={img.description || ""}
+                                        onChange={(e) =>
+                                            setExistingImages((prev) =>
+                                                prev.map((im) =>
+                                                    im.id === img.id ? { ...im, description: e.target.value } : im
+                                                )
                                             )
-                                        )
-                                    }
-                                    sx={{ mt: 1 }}
-                                />
-                            </Box>
-                        </Grid>
-                    ))}
+                                        }
+                                        sx={blogFormStyles.imageDescriptionField}
+                                    />
+                                </Box>
+                            </Grid>
+                        ))}
 
-                    {newImages.map((f, i) => (
-                        <Grid item xs={12} sm={6} md={4} key={i}>
-                            <Box sx={{ position: "relative" }}>
-                                <img
-                                    src={URL.createObjectURL(f)}
-                                    alt=""
-                                    style={{
-                                        width: "100%",
-                                        height: 140,
-                                        objectFit: "cover",
-                                        borderRadius: 8,
-                                    }}
-                                />
-                                <IconButton
-                                    size="small"
-                                    onClick={() => handleRemoveNew(i)}
-                                    sx={{
-                                        position: "absolute",
-                                        top: 8,
-                                        right: 8,
-                                        bgcolor: "error.main",
-                                        color: "white",
-                                        "&:hover": { bgcolor: "error.dark" },
-                                    }}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            </Box>
-                        </Grid>
-                    ))}
-                </Grid>
+                        {newImages.map((f, i) => (
+                            <Grid item xs={12} sm={6} md={4} key={i}>
+                                <Box sx={blogFormStyles.imageBox}>
+                                    <img
+                                        src={URL.createObjectURL(f)}
+                                        alt=""
+                                        style={blogFormStyles.imagePreview}
+                                    />
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => handleRemoveNew(i)}
+                                        sx={blogFormStyles.deleteImageButton}
+                                    >
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
 
-                <Stack direction="row" spacing={2} mt={2}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<AddPhotoAlternateIcon />}
-                        onClick={() => fileRef.current?.click()}
-                        disabled={saving || existingImages.length + newImages.length >= MAX_IMAGES}
-                    >
-                        Agregar imágenes
-                    </Button>
-                    <input
-                        ref={fileRef}
-                        type="file"
-                        multiple
-                        hidden
-                        accept={ALLOWED_TYPES.join(",")}
-                        onChange={handleAddImages}
-                    />
+                    <Stack direction="row" spacing={2}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<AddPhotoAlternateIcon />}
+                            onClick={() => fileRef.current?.click()}
+                            disabled={saving || existingImages.length + newImages.length >= MAX_IMAGES}
+                            sx={blogFormStyles.addImageButton}
+                        >
+                            Agregar imágenes
+                        </Button>
+                        <input
+                            ref={fileRef}
+                            type="file"
+                            multiple
+                            hidden
+                            accept={ALLOWED_TYPES.join(",")}
+                            onChange={handleAddImages}
+                        />
+                    </Stack>
                 </Stack>
 
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={4}>
-                    <Button type="submit" variant="contained" disabled={saving} fullWidth>
+                {/* Action Buttons */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    mt={4}
+                    justifyContent="flex-end"
+                >
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={saving}
+                        fullWidth
+                        sx={blogFormStyles.submitButton}
+                    >
                         {saving ? "Guardando..." : "Guardar cambios"}
                     </Button>
                     <Button
@@ -262,6 +264,7 @@ const BlogEdit = () => {
                         color="secondary"
                         onClick={() => navigate("/blog")}
                         fullWidth
+                        sx={blogFormStyles.cancelButton}
                     >
                         Cancelar
                     </Button>

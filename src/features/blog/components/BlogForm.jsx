@@ -13,6 +13,7 @@ import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
+import { blogFormStyles } from "../styles/blogForm.styles";
 
 const MAX_IMAGES = 5;
 const MAX_SIZE_MB = 5;
@@ -35,28 +36,33 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
     const handleChange = (e) =>
         setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-    const handleAddImages = useCallback((e) => {
-        const files = Array.from(e.target.files);
-        e.target.value = null;
+    const handleAddImages = useCallback(
+        (e) => {
+            const files = Array.from(e.target.files);
+            e.target.value = null;
 
-        const valid = files.filter((file) => {
-            if (!ALLOWED_TYPES.includes(file.type)) {
-                enqueueSnackbar(`Tipo no permitido: ${file.name}`, { variant: "warning" });
-                return false;
-            }
-            if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-                enqueueSnackbar(`El archivo ${file.name} excede ${MAX_SIZE_MB} MB`, { variant: "warning" });
-                return false;
-            }
-            return true;
-        });
+            const valid = files.filter((file) => {
+                if (!ALLOWED_TYPES.includes(file.type)) {
+                    enqueueSnackbar(`Tipo no permitido: ${file.name}`, { variant: "warning" });
+                    return false;
+                }
+                if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+                    enqueueSnackbar(`El archivo ${file.name} excede ${MAX_SIZE_MB} MB`, {
+                        variant: "warning",
+                    });
+                    return false;
+                }
+                return true;
+            });
 
-        if (images.length + valid.length > MAX_IMAGES) {
-            enqueueSnackbar(`Máximo ${MAX_IMAGES} imágenes`, { variant: "warning" });
-            return;
-        }
-        setImages((prev) => [...prev, ...valid]);
-    }, [images]);
+            if (images.length + valid.length > MAX_IMAGES) {
+                enqueueSnackbar(`Máximo ${MAX_IMAGES} imágenes`, { variant: "warning" });
+                return;
+            }
+            setImages((prev) => [...prev, ...valid]);
+        },
+        [images, enqueueSnackbar]
+    );
 
     const handleRemoveImage = (index) =>
         setImages((prev) => prev.filter((_, i) => i !== index));
@@ -70,7 +76,10 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
 
         try {
             const data = new FormData();
-            data.append("post", new Blob([JSON.stringify(formData)], { type: "application/json" }));
+            data.append(
+                "post",
+                new Blob([JSON.stringify(formData)], { type: "application/json" })
+            );
             images.forEach((f) => data.append("images", f));
             await onSubmit(data);
         } finally {
@@ -79,27 +88,54 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
     };
 
     return (
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ width: "100%" }}>
-            <Stack spacing={3}>
-                <TextField label="Título" name="title" value={formData.title} onChange={handleChange} fullWidth required />
-                <TextField label="Subtítulo" name="subtitle" value={formData.subtitle} onChange={handleChange} fullWidth />
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={blogFormStyles.form}>
+            <Stack spacing={4}>
+                {/* Title */}
                 <TextField
-                    label="Contenido"
+                    label="Título *"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    placeholder="Escribe un título atractivo para tu publicación"
+                    sx={blogFormStyles.textField}
+                />
+
+                {/* Subtitle */}
+                <TextField
+                    label="Subtítulo"
+                    name="subtitle"
+                    value={formData.subtitle}
+                    onChange={handleChange}
+                    fullWidth
+                    placeholder="Añade un subtítulo descriptivo (opcional)"
+                    sx={blogFormStyles.textField}
+                />
+
+                {/* Content */}
+                <TextField
+                    label="Contenido *"
                     name="content"
                     value={formData.content}
                     onChange={handleChange}
                     fullWidth
                     multiline
-                    minRows={6}
+                    minRows={10}
                     required
+                    placeholder="Escribe el contenido de tu publicación..."
+                    sx={blogFormStyles.contentField}
                 />
 
+                {/* Images (only for create mode) */}
                 {mode === "create" && (
                     <>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                            <Typography variant="h6" fontWeight={700}>Imágenes</Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                {images.length}/{MAX_IMAGES}
+                        <Stack sx={blogFormStyles.imagesHeader}>
+                            <Typography sx={blogFormStyles.imagesTitle}>
+                                Imágenes del artículo
+                            </Typography>
+                            <Typography sx={blogFormStyles.imageCounter}>
+                                {images.length} / {MAX_IMAGES}
                             </Typography>
                         </Stack>
 
@@ -108,8 +144,9 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
                             startIcon={<AddPhotoAlternateIcon />}
                             onClick={() => fileRef.current?.click()}
                             disabled={images.length >= MAX_IMAGES}
+                            sx={blogFormStyles.addImageButton}
                         >
-                            Agregar imágenes
+                            {images.length === 0 ? "Agregar imágenes" : "Agregar más imágenes"}
                         </Button>
 
                         <input
@@ -121,50 +158,66 @@ const BlogForm = ({ onSubmit, defaultValues = {}, submitting, mode }) => {
                             onChange={handleAddImages}
                         />
 
-                        <Grid container spacing={2}>
-                            {images.map((file, i) => (
-                                <Grid item xs={12} sm={6} md={4} key={i}>
-                                    <Box sx={{ position: "relative" }}>
-                                        <img
-                                            src={URL.createObjectURL(file)}
-                                            alt=""
-                                            style={{
-                                                width: "100%",
-                                                height: 160,
-                                                objectFit: "cover",
-                                                borderRadius: 8,
-                                            }}
-                                        />
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => handleRemoveImage(i)}
-                                            sx={{
-                                                position: "absolute",
-                                                top: 8,
-                                                right: 8,
-                                                bgcolor: "error.main",
-                                                color: "#fff",
-                                                "&:hover": { bgcolor: "error.dark" },
-                                            }}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Box>
-                                </Grid>
-                            ))}
-                        </Grid>
+                        {images.length > 0 && (
+                            <Grid container spacing={2}>
+                                {images.map((file, i) => (
+                                    <Grid item xs={12} sm={6} md={4} key={i}>
+                                        <Box sx={blogFormStyles.imageBox}>
+                                            <img
+                                                src={URL.createObjectURL(file)}
+                                                alt={`Preview ${i + 1}`}
+                                                style={blogFormStyles.imagePreview}
+                                            />
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => handleRemoveImage(i)}
+                                                sx={blogFormStyles.deleteImageButton}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Box>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        )}
                     </>
                 )}
 
                 {uploadProgress > 0 && (
-                    <LinearProgress variant="determinate" value={uploadProgress} sx={{ mt: 1 }} />
+                    <LinearProgress
+                        variant="determinate"
+                        value={uploadProgress}
+                        sx={blogFormStyles.progressBar}
+                    />
                 )}
 
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={2} mt={2}>
-                    <Button type="submit" variant="contained" fullWidth={true} disabled={submitting}>
-                        {submitting ? "Guardando..." : mode === "edit" ? "Guardar cambios" : "Crear publicación"}
+                {/* Action buttons */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    mt={4}
+                    justifyContent="flex-end"
+                >
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        fullWidth
+                        disabled={submitting}
+                        sx={blogFormStyles.submitButton}
+                    >
+                        {submitting
+                            ? "Guardando..."
+                            : mode === "edit"
+                                ? "Guardar cambios"
+                                : "Publicar artículo"}
                     </Button>
-                    <Button variant="outlined" color="secondary" onClick={() => navigate("/blog")} fullWidth={true}>
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => navigate("/blog")}
+                        fullWidth
+                        sx={blogFormStyles.cancelButton}
+                    >
                         Cancelar
                     </Button>
                 </Stack>
