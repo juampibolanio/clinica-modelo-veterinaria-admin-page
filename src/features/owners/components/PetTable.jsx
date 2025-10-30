@@ -13,22 +13,29 @@ import {
     IconButton,
     Tooltip,
     Stack,
+    Card,
+    useTheme,
+    useMediaQuery,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
+import PetsIcon from "@mui/icons-material/Pets";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import { useNavigate } from "react-router-dom";
+import { petTableStyles } from "../styles/petTable.styles";
 
 /**
- * PetTable - Displays a list of pets for a given owner.
- * Supports deletion, responsive layout, and consistent UI style.
+ * PetTable - Responsive version
+ * 💻 Desktop: Data Table
+ * 📱 Mobile: Clean cards
  */
 const PetTable = ({ pets = [], onDeletePet }) => {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
 
-    // Columns config (memoized to avoid re-render)
     const columns = useMemo(
         () => [
             { field: "name", header: "Nombre" },
@@ -37,116 +44,142 @@ const PetTable = ({ pets = [], onDeletePet }) => {
             { field: "gender", header: "Sexo" },
             { field: "age", header: "Edad" },
             { field: "weight", header: "Peso" },
-            { field: "actions", header: "Acciones" },
+            { field: "actions", header: "Acciones", align: "center" },
         ],
         []
     );
 
-    const handleDeleteClick = (pet) => {
-        setSelectedPet(pet);
-        setConfirmOpen(true);
-    };
+    const renderGender = (g) =>
+        g === "MALE" ? "Macho" : g === "FEMALE" ? "Hembra" : "-";
 
-    const handleConfirmDelete = () => {
+    const handleDelete = () => {
         if (onDeletePet && selectedPet) onDeletePet(selectedPet.id);
         setConfirmOpen(false);
         setSelectedPet(null);
     };
 
-    // 🔹 Función auxiliar para traducir el género
-    const renderGender = (gender) => {
-        if (gender === "MALE") return "Macho";
-        if (gender === "FEMALE") return "Hembra";
-        return "-";
-    };
-
     return (
-        <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+        <Paper elevation={0} sx={petTableStyles.paper}>
             {/* Header */}
-            <Stack
-                direction={{ xs: "column", sm: "row" }}
-                alignItems={{ xs: "stretch", sm: "center" }}
-                justifyContent="space-between"
-                mb={2}
-                spacing={1}
-            >
-                <Typography variant="h6" fontWeight={700}>
-                    Mascotas registradas
-                </Typography>
+            <Stack sx={petTableStyles.header}>
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <PetsIcon sx={{ color: "primary.main", fontSize: "1.5rem" }} />
+                    <Typography variant="h6" sx={petTableStyles.title}>
+                        Mascotas registradas
+                    </Typography>
+                </Stack>
             </Stack>
 
-            <Divider sx={{ mb: 2 }} />
+            <Divider sx={petTableStyles.divider} />
 
-            {/* Empty state */}
+            {/* Empty State */}
             {pets.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                    Este cliente no tiene mascotas registradas.
-                </Typography>
+                <Box sx={petTableStyles.emptyState}>
+                    <Typography sx={petTableStyles.emptyText}>
+                        Este cliente no tiene mascotas registradas
+                    </Typography>
+                </Box>
+            ) : isMobile ? (
+                /* 📱 Mobile: Card layout */
+                <Stack spacing={2}>
+                    {pets.map((p) => (
+                        <Card key={p.id} sx={petTableStyles.mobileCard}>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <PetsIcon sx={{ color: "primary.main", fontSize: "1.4rem" }} />
+                                <Typography sx={petTableStyles.mobileTitle}>
+                                    {p.name}
+                                </Typography>
+                            </Stack>
+
+                            <Typography sx={petTableStyles.mobileSubtitle}>
+                                {p.species} {p.breed ? `• ${p.breed}` : ""}
+                            </Typography>
+
+                            <Typography sx={petTableStyles.mobileMetadata}>
+                                Sexo: {renderGender(p.gender)} — Edad:{" "}
+                                {p.age ? `${p.age} años` : "-"} — Peso:{" "}
+                                {p.weight ? `${p.weight} kg` : "-"}
+                            </Typography>
+
+                            <Stack direction="row" spacing={1} mt={1.5}>
+                                <IconButton
+                                    color="primary"
+                                    onClick={() => navigate(`/pets/${p.id}`)}
+                                    sx={petTableStyles.actionButton}
+                                >
+                                    <VisibilityIcon />
+                                </IconButton>
+                                <IconButton
+                                    color="error"
+                                    onClick={() => {
+                                        setSelectedPet(p);
+                                        setConfirmOpen(true);
+                                    }}
+                                    sx={petTableStyles.actionButton}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </Stack>
+                        </Card>
+                    ))}
+                </Stack>
             ) : (
-                <Box sx={{ overflowX: "auto" }}>
+                /* 💻 Desktop: Table layout */
+                <Box sx={petTableStyles.tableWrapper}>
                     <TableContainer>
-                        <Table stickyHeader size="small" aria-label="tabla de mascotas">
-                            <TableHead>
+                        <Table size="small">
+                            <TableHead sx={petTableStyles.tableHead}>
                                 <TableRow>
-                                    {columns.map((col) => (
-                                        <TableCell
-                                            key={col.field}
-                                            align={col.field === "actions" ? "center" : "left"}
-                                            sx={{
-                                                fontWeight: 700,
-                                                backgroundColor: "rgba(55,129,227,0.08)",
-                                            }}
-                                        >
-                                            {col.header}
+                                    {columns.map((c) => (
+                                        <TableCell key={c.field} align={c.align || "left"}>
+                                            {c.header}
                                         </TableCell>
                                     ))}
                                 </TableRow>
                             </TableHead>
 
                             <TableBody>
-                                {pets.map((pet) => (
-                                    <TableRow
-                                        key={pet.id}
-                                        hover
-                                        sx={{
-                                            "&:hover": {
-                                                backgroundColor: "rgba(55, 129, 227, 0.04)",
-                                            },
-                                        }}
-                                    >
-                                        <TableCell>{pet.name}</TableCell>
-                                        <TableCell>{pet.species}</TableCell>
-                                        <TableCell>{pet.breed || "-"}</TableCell>
-                                        <TableCell>{renderGender(pet.gender)}</TableCell>
-                                        <TableCell>
-                                            {pet.age
-                                                ? `${pet.age} años`
-                                                : pet.birthDate
-                                                    ? `Nacido ${pet.birthDate}`
-                                                    : "-"}
+                                {pets.map((p) => (
+                                    <TableRow key={p.id} hover sx={petTableStyles.tableRow}>
+                                        <TableCell sx={petTableStyles.tableCell}>{p.name}</TableCell>
+                                        <TableCell sx={petTableStyles.tableCell}>
+                                            {p.species}
                                         </TableCell>
-                                        <TableCell>
-                                            {pet.weight ? `${pet.weight} kg` : "-"}
+                                        <TableCell sx={petTableStyles.tableCell}>
+                                            {p.breed || "-"}
+                                        </TableCell>
+                                        <TableCell sx={petTableStyles.tableCell}>
+                                            {renderGender(p.gender)}
+                                        </TableCell>
+                                        <TableCell sx={petTableStyles.tableCell}>
+                                            {p.age ? `${p.age} años` : "-"}
+                                        </TableCell>
+                                        <TableCell sx={petTableStyles.tableCell}>
+                                            {p.weight ? `${p.weight} kg` : "-"}
                                         </TableCell>
                                         <TableCell align="center">
-                                            <Stack direction="row" justifyContent="center" spacing={1}>
-                                                <Tooltip title="Ver detalle">
+                                            <Stack direction="row" justifyContent="center" spacing={0.5}>
+                                                <Tooltip title="Ver detalle" arrow>
                                                     <IconButton
                                                         size="small"
                                                         color="primary"
-                                                        onClick={() => navigate(`/pets/${pet.id}`)}
+                                                        onClick={() => navigate(`/pets/${p.id}`)}
+                                                        sx={petTableStyles.actionButton}
                                                     >
-                                                        <VisibilityIcon />
+                                                        <VisibilityIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
-
-                                                <Tooltip title="Eliminar mascota">
+                                                <Tooltip title="Eliminar" arrow>
                                                     <IconButton
                                                         size="small"
                                                         color="error"
-                                                        onClick={() => handleDeleteClick(pet)}
+                                                        onClick={() => {
+                                                            setSelectedPet(p);
+                                                            setConfirmOpen(true);
+                                                        }}
+                                                        sx={petTableStyles.actionButton}
                                                     >
-                                                        <DeleteIcon />
+                                                        <DeleteIcon fontSize="small" />
                                                     </IconButton>
                                                 </Tooltip>
                                             </Stack>
@@ -159,7 +192,7 @@ const PetTable = ({ pets = [], onDeletePet }) => {
                 </Box>
             )}
 
-            {/* Confirm dialog */}
+            {/* Confirm Dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar mascota"
@@ -169,9 +202,10 @@ const PetTable = ({ pets = [], onDeletePet }) => {
                         : "¿Confirmar eliminación?"
                 }
                 onClose={() => setConfirmOpen(false)}
-                onConfirm={handleConfirmDelete}
+                onConfirm={handleDelete}
                 confirmText="Eliminar"
                 cancelText="Cancelar"
+                confirmColor="error"
             />
         </Paper>
     );

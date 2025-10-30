@@ -4,6 +4,7 @@ import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
 import OwnerForm from "../components/OwnerForm";
 import { createOwner } from "../api/owners.api";
+import { ownerCreateStyles } from "../styles/ownerCreate.styles";
 
 /**
  * Page: Create Owner
@@ -29,9 +30,12 @@ const OwnerCreate = () => {
     };
 
     return (
-        <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
-            <Typography variant="h4" fontWeight={800}>
-                Nuevo Dueño
+        <Stack sx={ownerCreateStyles.container}>
+            <Typography variant="h4" sx={ownerCreateStyles.title}>
+                Nuevo Dueño / Cliente
+            </Typography>
+            <Typography sx={ownerCreateStyles.subtitle}>
+                Registra un nuevo cliente en el sistema
             </Typography>
             <OwnerForm onSubmit={handleSubmit} submitting={saving} mode="create" />
         </Stack>

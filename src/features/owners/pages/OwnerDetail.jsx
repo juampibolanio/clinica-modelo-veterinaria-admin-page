@@ -18,6 +18,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import PersonIcon from "@mui/icons-material/Person";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import dayjs from "dayjs";
@@ -27,6 +28,7 @@ import { getPetsByOwnerId, deletePet } from "../../pets/api/pets.api";
 import { listAppointments } from "../../appointments/api/appointments.api";
 import { STATUS_COLOR, formatStatus } from "../../appointments/utils/utils";
 import PetTable from "../components/PetTable";
+import { ownerDetailStyles } from "../styles/ownerDetail.styles";
 
 const OwnerDetail = () => {
     const { id } = useParams();
@@ -41,23 +43,20 @@ const OwnerDetail = () => {
     const [editingDebt, setEditingDebt] = useState(false);
     const [newDebt, setNewDebt] = useState("");
 
-    /** 🔹 Load owner + pets data */
     const fetchOwnerData = useCallback(async () => {
         try {
             const ownerData = await getOwnerById(id);
             const petData = await getPetsByOwnerId(id);
             setOwner(ownerData);
             setPets(petData);
-        } catch (error) {
-            console.error("Error loading owner:", error);
-            enqueueSnackbar("Error al cargar la información del dueño", { variant: "error" });
+        } catch {
+            enqueueSnackbar("Error al cargar la información del cliente", { variant: "error" });
             navigate("/owners");
         } finally {
             setLoading(false);
         }
     }, [id, enqueueSnackbar, navigate]);
 
-    /** 🔹 Load recent appointments */
     const fetchAppointments = useCallback(async () => {
         try {
             setLoadingAppointments(true);
@@ -69,8 +68,6 @@ const OwnerDetail = () => {
                 direction: "desc",
             });
             setAppointments(data.content || []);
-        } catch (error) {
-            console.error("Error loading appointments:", error);
         } finally {
             setLoadingAppointments(false);
         }
@@ -81,42 +78,35 @@ const OwnerDetail = () => {
         fetchAppointments();
     }, [fetchOwnerData, fetchAppointments]);
 
-    /** Update debt */
     const handleDebtSave = async () => {
         try {
-            const parsedDebt = parseFloat(newDebt);
-            if (isNaN(parsedDebt) || parsedDebt < 0) {
-                enqueueSnackbar("La deuda debe ser un número válido y no negativo", {
-                    variant: "warning",
-                });
+            const parsed = parseFloat(newDebt);
+            if (isNaN(parsed) || parsed < 0) {
+                enqueueSnackbar("Ingrese una deuda válida y no negativa", { variant: "warning" });
                 return;
             }
-
-            await patchOwner(id, { totalDebt: parsedDebt });
-            setOwner((prev) => ({ ...prev, totalDebt: parsedDebt }));
+            await patchOwner(id, { totalDebt: parsed });
+            setOwner((prev) => ({ ...prev, totalDebt: parsed }));
             enqueueSnackbar("Deuda actualizada correctamente ✅", { variant: "success" });
             setEditingDebt(false);
-        } catch (error) {
-            console.error("Error updating debt:", error);
+        } catch {
             enqueueSnackbar("Error al actualizar la deuda", { variant: "error" });
         }
     };
 
-    /** Delete pet and refresh list */
     const handleDeletePet = async (petId) => {
         try {
             await deletePet(petId);
             enqueueSnackbar("Mascota eliminada correctamente", { variant: "success" });
             setPets((prev) => prev.filter((p) => p.id !== petId));
-        } catch (error) {
-            console.error("Error deleting pet:", error);
+        } catch {
             enqueueSnackbar("Error al eliminar la mascota", { variant: "error" });
         }
     };
 
     if (loading)
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
+            <Box sx={ownerDetailStyles.loadingBox}>
                 <CircularProgress />
             </Box>
         );
@@ -124,26 +114,21 @@ const OwnerDetail = () => {
     if (!owner) return null;
 
     return (
-        <Stack spacing={3} sx={{ p: { xs: 1, sm: 2 } }}>
+        <Stack sx={ownerDetailStyles.container}>
             {/* Header */}
-            <Stack
-                direction={{ xs: "column", sm: "row" }}
-                alignItems={{ xs: "stretch", sm: "center" }}
-                spacing={1}
-                flexWrap="wrap"
-            >
+            <Stack sx={ownerDetailStyles.header}>
                 <Button
                     startIcon={<ArrowBackIcon />}
                     variant="outlined"
                     color="secondary"
                     onClick={() => navigate("/owners")}
-                    sx={{ width: { xs: "100%", sm: "auto" } }}
+                    sx={ownerDetailStyles.backButton}
                 >
                     Volver
                 </Button>
 
-                <Typography variant="h4" fontWeight={800}>
-                    Detalle del cliente
+                <Typography variant="h4" sx={ownerDetailStyles.title}>
+                    Detalle del Cliente
                 </Typography>
 
                 <Button
@@ -151,20 +136,21 @@ const OwnerDetail = () => {
                     color="primary"
                     startIcon={<EditIcon />}
                     onClick={() => navigate(`/owners/${id}/edit`)}
-                    sx={{ ml: { sm: "auto" }, width: { xs: "100%", sm: "auto" } }}
+                    sx={ownerDetailStyles.editButton}
                 >
                     Editar
                 </Button>
             </Stack>
 
             {/* Owner Info */}
-            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={700} gutterBottom>
-                    Información personal
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
+            <Paper elevation={0} sx={ownerDetailStyles.infoPaper}>
+                <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
+                    <PersonIcon sx={{ color: "primary.main", fontSize: "1.5rem" }} />
+                    <Typography sx={ownerDetailStyles.sectionTitle}>Información Personal</Typography>
+                </Stack>
+                <Divider sx={ownerDetailStyles.divider} />
 
-                <Grid container spacing={2}>
+                <Grid container spacing={3}>
                     {[
                         ["Nombre", owner.name],
                         ["Apellido", owner.surname],
@@ -174,19 +160,14 @@ const OwnerDetail = () => {
                         ["Dirección", owner.address || "-"],
                     ].map(([label, value]) => (
                         <Grid item xs={12} sm={6} md={4} key={label}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                                {label}
-                            </Typography>
-                            <Typography variant="body1">{value}</Typography>
+                            <Typography sx={ownerDetailStyles.infoLabel}>{label}</Typography>
+                            <Typography sx={ownerDetailStyles.infoValue}>{value}</Typography>
                         </Grid>
                     ))}
 
                     {/* Deuda */}
                     <Grid item xs={12} sm={6} md={4}>
-                        <Typography variant="subtitle2" color="text.secondary">
-                            Deuda total
-                        </Typography>
-
+                        <Typography sx={ownerDetailStyles.infoLabel}>Deuda Total</Typography>
                         {editingDebt ? (
                             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
                                 <TextField
@@ -195,10 +176,10 @@ const OwnerDetail = () => {
                                     value={newDebt}
                                     onChange={(e) => setNewDebt(e.target.value)}
                                     inputProps={{ min: 0, step: "0.01" }}
-                                    sx={{ width: { xs: "100%", sm: 120 } }}
+                                    sx={ownerDetailStyles.debtField}
                                 />
                                 <Stack direction="row" spacing={0.5}>
-                                    <IconButton color="success" onClick={handleDebtSave}>
+                                    <IconButton color="success" onClick={handleDebtSave} sx={ownerDetailStyles.iconButton}>
                                         <CheckIcon />
                                     </IconButton>
                                     <IconButton
@@ -207,26 +188,25 @@ const OwnerDetail = () => {
                                             setEditingDebt(false);
                                             setNewDebt("");
                                         }}
+                                        sx={ownerDetailStyles.iconButton}
                                     >
                                         <CloseIcon />
                                     </IconButton>
                                 </Stack>
                             </Stack>
                         ) : (
-                            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                                <Typography
-                                    variant="body1"
-                                    color={owner.totalDebt > 0 ? "error.main" : "success.main"}
-                                >
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <Typography sx={ownerDetailStyles.debtValue(owner.totalDebt > 0)}>
                                     ${owner.totalDebt?.toFixed(2) || "0.00"}
                                 </Typography>
-                                <Tooltip title="Editar deuda">
+                                <Tooltip title="Editar deuda" arrow>
                                     <IconButton
                                         size="small"
                                         onClick={() => {
                                             setEditingDebt(true);
                                             setNewDebt(owner.totalDebt?.toFixed(2) || "0.00");
                                         }}
+                                        sx={ownerDetailStyles.iconButton}
                                     >
                                         <EditIcon fontSize="small" />
                                     </IconButton>
@@ -237,78 +217,62 @@ const OwnerDetail = () => {
                 </Grid>
             </Paper>
 
-            {/* Pets Section (PetTable integrado) */}
-            <Stack spacing={2}>
-                <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    justifyContent="space-between"
-                    alignItems={{ xs: "stretch", sm: "center" }}
-                    spacing={1}
-                >
-                    <Typography variant="h6" fontWeight={700}>
-                        Mascotas registradas
-                    </Typography>
+            {/* Pets Section */}
+            <Stack spacing={3}>
+                <Stack sx={ownerDetailStyles.petsHeader}>
                     <Button
                         variant="contained"
                         onClick={() => navigate(`/pets/create?ownerId=${id}`)}
-                        sx={{ width: { xs: "100%", sm: "auto" } }}
+                        sx={ownerDetailStyles.addPetButton}
                     >
                         Nueva mascota
                     </Button>
                 </Stack>
-
                 <PetTable pets={pets} onDeletePet={handleDeletePet} />
             </Stack>
 
             {/* Appointments Section */}
-            <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-                <Stack direction="row" alignItems="center" spacing={1} mb={1} flexWrap="wrap">
-                    <CalendarMonthIcon color="primary" />
-                    <Typography variant="h6" fontWeight={700}>
-                        Turnos recientes
-                    </Typography>
+            <Paper elevation={0} sx={ownerDetailStyles.appointmentsPaper}>
+                <Stack sx={ownerDetailStyles.appointmentsHeader}>
+                    <CalendarMonthIcon sx={{ color: "primary.main", fontSize: "1.5rem" }} />
+                    <Typography sx={ownerDetailStyles.appointmentsTitle}>Turnos Recientes</Typography>
                     <Button
                         variant="contained"
-                        sx={{ ml: "auto" }}
+                        sx={ownerDetailStyles.addAppointmentButton}
                         onClick={() => navigate(`/appointments/create?ownerId=${id}`)}
                     >
                         Nuevo turno
                     </Button>
                 </Stack>
-                <Divider sx={{ mb: 2 }} />
-
+                <Divider sx={ownerDetailStyles.divider} />
                 {loadingAppointments ? (
-                    <CircularProgress />
+                    <Box sx={{ textAlign: "center", py: 3 }}>
+                        <CircularProgress size={32} />
+                    </Box>
                 ) : appointments.length === 0 ? (
-                    <Typography color="text.secondary">No hay turnos registrados.</Typography>
+                    <Box sx={ownerDetailStyles.emptyState}>
+                        <Typography sx={ownerDetailStyles.emptyText}>No hay turnos registrados</Typography>
+                    </Box>
                 ) : (
-                    appointments.map((a) => (
-                        <Box key={a.id} sx={{ py: 1 }}>
-                            <Stack
-                                direction={{ xs: "column", sm: "row" }}
-                                spacing={1}
-                                alignItems={{ xs: "flex-start", sm: "center" }}
-                            >
-                                <Typography sx={{ minWidth: 120 }}>
+                    appointments.map((a, i) => (
+                        <Box key={a.id} sx={ownerDetailStyles.appointmentItem}>
+                            <Stack sx={ownerDetailStyles.appointmentRow}>
+                                <Typography sx={ownerDetailStyles.appointmentDate}>
                                     {dayjs(a.date).format("DD/MM/YYYY")} {a.time}
                                 </Typography>
-                                <Chip
-                                    label={formatStatus(a.status)}
-                                    size="small"
-                                    color={STATUS_COLOR[a.status] || "default"}
-                                />
-                                <Typography flex={1}>
+                                <Chip label={formatStatus(a.status)} size="small" color={STATUS_COLOR[a.status] || "default"} />
+                                <Typography sx={ownerDetailStyles.appointmentInfo}>
                                     {a.petName ? `Mascota: ${a.petName}` : "Sin mascota"}
                                 </Typography>
                                 <Button
                                     size="small"
                                     onClick={() => navigate(`/appointments/${a.id}`)}
-                                    sx={{ alignSelf: { xs: "flex-end", sm: "center" } }}
+                                    sx={ownerDetailStyles.viewButton}
                                 >
                                     Ver
                                 </Button>
                             </Stack>
-                            <Divider sx={{ mt: 1 }} />
+                            {i < appointments.length - 1 && <Divider sx={{ mt: 2 }} />}
                         </Box>
                     ))
                 )}

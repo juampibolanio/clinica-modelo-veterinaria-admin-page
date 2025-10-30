@@ -1,16 +1,10 @@
-import {
-    Box,
-    Grid,
-    Stack,
-    TextField,
-    Button,
-    CircularProgress,
-} from "@mui/material";
+import { Box, Grid, Stack, TextField, Button, CircularProgress } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ownerSchema } from "../schemas/owner.schema";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ownerFormStyles } from "../styles/ownerForm.styles";
 
 /**
  * OwnerForm - Unified form for creating and editing owners.
@@ -22,7 +16,6 @@ const OwnerForm = ({ defaultValues = {}, onSubmit, submitting, mode = "create" }
     const {
         register,
         handleSubmit,
-        setValue,
         formState: { errors, isValid },
         reset,
     } = useForm({
@@ -39,39 +32,54 @@ const OwnerForm = ({ defaultValues = {}, onSubmit, submitting, mode = "create" }
         },
     });
 
-    // Update form when editing
+    /**
+     * Prevents infinite re-renders when defaultValues changes reference.
+     * We reset the form only once or when editing mode with valid data.
+     */
     useEffect(() => {
-        if (defaultValues) reset(defaultValues);
-    }, [defaultValues, reset]);
+        if (mode === "edit" && defaultValues && Object.keys(defaultValues).length > 0) {
+            reset(defaultValues);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reset]);
 
     const handleFormSubmit = (data) => {
         onSubmit?.(data);
     };
 
     return (
-        <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-            <Grid container spacing={2}>
+        <Box
+            component="form"
+            onSubmit={handleSubmit(handleFormSubmit)}
+            noValidate
+            sx={ownerFormStyles.form}
+        >
+            <Grid container spacing={3}>
                 {/* Name */}
                 <Grid item xs={12} sm={6}>
                     <TextField
-                        label="Nombre"
+                        label="Nombre *"
+                        placeholder="Ingrese el nombre"
                         fullWidth
                         {...register("name")}
                         error={!!errors.name}
                         helperText={errors.name?.message}
                         required
+                        sx={ownerFormStyles.textField}
                     />
                 </Grid>
 
                 {/* Surname */}
                 <Grid item xs={12} sm={6}>
                     <TextField
-                        label="Apellido"
+                        label="Apellido *"
+                        placeholder="Ingrese el apellido"
                         fullWidth
                         {...register("surname")}
                         error={!!errors.surname}
                         helperText={errors.surname?.message}
                         required
+                        sx={ownerFormStyles.textField}
                     />
                 </Grid>
 
@@ -79,10 +87,13 @@ const OwnerForm = ({ defaultValues = {}, onSubmit, submitting, mode = "create" }
                 <Grid item xs={12} sm={6}>
                     <TextField
                         label="Email"
+                        placeholder="ejemplo@email.com"
                         fullWidth
+                        type="email"
                         {...register("email")}
                         error={!!errors.email}
                         helperText={errors.email?.message}
+                        sx={ownerFormStyles.textField}
                     />
                 </Grid>
 
@@ -90,21 +101,25 @@ const OwnerForm = ({ defaultValues = {}, onSubmit, submitting, mode = "create" }
                 <Grid item xs={12} sm={6}>
                     <TextField
                         label="Teléfono"
+                        placeholder="Ej: 3795123456"
                         fullWidth
                         {...register("phoneNumber")}
                         error={!!errors.phoneNumber}
                         helperText={errors.phoneNumber?.message}
+                        sx={ownerFormStyles.textField}
                     />
                 </Grid>
 
-                {/* Direction */}
+                {/* Address */}
                 <Grid item xs={12} sm={6}>
                     <TextField
                         label="Dirección"
+                        placeholder="Ingrese la dirección"
                         fullWidth
                         {...register("address")}
                         error={!!errors.address}
                         helperText={errors.address?.message}
+                        sx={ownerFormStyles.textField}
                     />
                 </Grid>
 
@@ -112,31 +127,23 @@ const OwnerForm = ({ defaultValues = {}, onSubmit, submitting, mode = "create" }
                 <Grid item xs={12} sm={6}>
                     <TextField
                         label="N° Documento"
+                        placeholder="Ej: 12345678"
                         fullWidth
                         {...register("documentNumber")}
                         error={!!errors.documentNumber}
                         helperText={errors.documentNumber?.message}
+                        sx={ownerFormStyles.textField}
                     />
                 </Grid>
             </Grid>
 
-            {/* Buttons */}
-            <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={2}
-                mt={3}
-                justifyContent="flex-end"
-            >
+            {/* Action Buttons */}
+            <Stack sx={ownerFormStyles.actionsContainer}>
                 <Button
                     variant="outlined"
                     color="secondary"
                     onClick={() => navigate(-1)}
-                    fullWidth
-                    sx={{
-                        "@media (min-width:600px)": {
-                            width: "auto",
-                        },
-                    }}
+                    sx={ownerFormStyles.cancelButton}
                 >
                     Cancelar
                 </Button>
@@ -145,15 +152,10 @@ const OwnerForm = ({ defaultValues = {}, onSubmit, submitting, mode = "create" }
                     type="submit"
                     variant="contained"
                     disabled={!isValid || submitting}
-                    fullWidth
-                    sx={{
-                        "@media (min-width:600px)": {
-                            width: "auto",
-                        },
-                    }}
+                    sx={ownerFormStyles.submitButton}
                 >
                     {submitting ? (
-                        <CircularProgress size={22} />
+                        <CircularProgress size={22} sx={{ color: "white" }} />
                     ) : mode === "edit" ? (
                         "Guardar cambios"
                     ) : (

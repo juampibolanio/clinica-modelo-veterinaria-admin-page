@@ -5,11 +5,15 @@ import {
     Typography,
     TextField,
     IconButton,
-    Tooltip,
     Button,
     Divider,
+    Tooltip,
+    Card,
+    useTheme,
+    useMediaQuery,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import { esES } from "@mui/x-data-grid/locales";
 import SearchIcon from "@mui/icons-material/Search";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
@@ -18,9 +22,18 @@ import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
 import { useNavigate } from "react-router-dom";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import { useOwnersList } from "../hooks/useOwnersList";
+import { ownerListStyles } from "../styles/ownerList.styles";
 
+/**
+ * Responsive Owner List:
+ * - DataGrid on desktop (with pagination & filters)
+ * - Card layout on mobile (simple & fast)
+ */
 const OwnerList = () => {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
+
     const {
         rows,
         loading,
@@ -34,40 +47,43 @@ const OwnerList = () => {
         fetchOwners,
     } = useOwnersList();
 
+    // DataGrid columns for desktop
     const columns = useMemo(
         () => [
-            { field: "id", headerName: "ID", width: 80 },
-            { field: "name", headerName: "Nombre", flex: 1 },
-            { field: "surname", headerName: "Apellido", flex: 1 },
-            { field: "email", headerName: "Email", flex: 1.3 },
-            { field: "phoneNumber", headerName: "Teléfono", flex: 1 },
-            { field: "documentNumber", headerName: "Documento", flex: 1 },
+            { field: "id", headerName: "ID", width: 70, align: "center", headerAlign: "center" },
+            { field: "name", headerName: "Nombre", flex: 1, minWidth: 120 },
+            { field: "surname", headerName: "Apellido", flex: 1, minWidth: 120 },
+            { field: "email", headerName: "Correo electrónico", flex: 1.3, minWidth: 200 },
+            { field: "phoneNumber", headerName: "Teléfono", flex: 0.9, minWidth: 100 },
+            { field: "documentNumber", headerName: "Documento", flex: 0.9, minWidth: 100 },
             {
                 field: "actions",
                 headerName: "Acciones",
                 sortable: false,
-                width: 160,
+                width: 180,
+                align: "center",
+                headerAlign: "center",
                 renderCell: (params) => (
-                    <Stack direction="row" spacing={1}>
-                        <Tooltip title="Ver detalle">
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                        <Tooltip title="Ver" arrow>
                             <IconButton
                                 size="small"
                                 color="primary"
                                 onClick={() => navigate(`/owners/${params.row.id}`)}
                             >
-                                <VisibilityIcon />
+                                <VisibilityIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Editar">
+                        <Tooltip title="Editar" arrow>
                             <IconButton
                                 size="small"
                                 color="secondary"
                                 onClick={() => navigate(`/owners/${params.row.id}/edit`)}
                             >
-                                <EditIcon />
+                                <EditIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Eliminar">
+                        <Tooltip title="Eliminar" arrow>
                             <IconButton
                                 size="small"
                                 color="error"
@@ -76,7 +92,7 @@ const OwnerList = () => {
                                     setConfirmOpen(true);
                                 }}
                             >
-                                <DeleteIcon />
+                                <DeleteIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
                     </Stack>
@@ -88,82 +104,147 @@ const OwnerList = () => {
 
     return (
         <>
-            <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
+            <Stack spacing={3}>
                 {/* Header */}
                 <Stack
                     direction={{ xs: "column", sm: "row" }}
                     justifyContent="space-between"
-                    alignItems={{ xs: "stretch", sm: "center" }}
-                    spacing={1}
+                    alignItems={{ xs: "flex-start", sm: "center" }}
+                    sx={ownerListStyles.header}
                 >
-                    <Typography variant="h4" fontWeight={800}>
+                    <Typography variant="h4" sx={ownerListStyles.title}>
                         Dueños / Clientes
                     </Typography>
+
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => navigate("/owners/create")}
-                        sx={{ width: { xs: "100%", sm: "auto" } }}
+                        sx={ownerListStyles.addButton}
                     >
                         Nuevo dueño
                     </Button>
                 </Stack>
 
-                {/* Filters */}
+                {/* Filtros */}
                 <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={1}
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    justifyContent="center"
                     alignItems="center"
-                    flexWrap="wrap"
+                    sx={ownerListStyles.filtersContainer}
                 >
                     <TextField
                         size="small"
                         label="Nombre"
                         value={search.name}
                         onChange={(e) => setSearch((s) => ({ ...s, name: e.target.value }))}
-                        fullWidth={!!window.matchMedia("(max-width:600px)").matches}
+                        sx={ownerListStyles.filterField}
                     />
                     <TextField
                         size="small"
                         label="Apellido"
                         value={search.surname}
                         onChange={(e) => setSearch((s) => ({ ...s, surname: e.target.value }))}
-                        fullWidth={!!window.matchMedia("(max-width:600px)").matches}
+                        sx={ownerListStyles.filterField}
                     />
                     <TextField
                         size="small"
                         label="Documento"
                         value={search.documentNumber}
-                        onChange={(e) =>
-                            setSearch((s) => ({ ...s, documentNumber: e.target.value }))
-                        }
-                        fullWidth={!!window.matchMedia("(max-width:600px)").matches}
+                        onChange={(e) => setSearch((s) => ({ ...s, documentNumber: e.target.value }))}
+                        sx={ownerListStyles.filterField}
                     />
-                    <IconButton onClick={fetchOwners}>
-                        <SearchIcon />
-                    </IconButton>
+                    <Tooltip title="Buscar" arrow>
+                        <IconButton
+                            onClick={fetchOwners}
+                            color="primary"
+                            sx={ownerListStyles.searchButton}
+                        >
+                            <SearchIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
 
-                <Divider />
+                <Divider sx={ownerListStyles.divider} />
 
-                {/* Table */}
-                <Box sx={{ height: { xs: 400, sm: 560 }, width: "100%" }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        loading={loading}
-                        disableRowSelectionOnClick
-                        disableColumnMenu
-                        density="compact"
-                        getRowId={(r) => r.id}
-                        sx={{
-                            "& .MuiDataGrid-columnHeaders": { fontWeight: 700 },
-                            "@media (max-width:600px)": {
-                                "& .MuiDataGrid-cell--textLeft": { fontSize: "0.85rem" },
-                            },
-                        }}
-                    />
-                </Box>
+                {/* ✅ Responsive section */}
+                {isSmall ? (
+                    <Stack spacing={2}>
+                        {rows.length > 0 ? (
+                            rows.map((o) => (
+                                <Card key={o.id} sx={ownerListStyles.mobileCard}>
+                                    <Typography sx={ownerListStyles.mobileTitle}>
+                                        {o.name} {o.surname}
+                                    </Typography>
+                                    <Typography sx={ownerListStyles.mobileSubtitle}>
+                                        {o.email || "Sin correo"} — {o.phoneNumber || "Sin teléfono"}
+                                    </Typography>
+                                    <Typography sx={ownerListStyles.mobileMetadata}>
+                                        Documento: {o.documentNumber || "-"}
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} mt={1}>
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => navigate(`/owners/${o.id}`)}
+                                            sx={ownerListStyles.actionButton}
+                                        >
+                                            <VisibilityIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="secondary"
+                                            onClick={() => navigate(`/owners/${o.id}/edit`)}
+                                            sx={ownerListStyles.actionButton}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => {
+                                                setSelectedOwner(o);
+                                                setConfirmOpen(true);
+                                            }}
+                                            sx={ownerListStyles.actionButton}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Stack>
+                                </Card>
+                            ))
+                        ) : (
+                            <Typography sx={ownerListStyles.emptyMessage}>
+                                No hay registros
+                            </Typography>
+                        )}
+                    </Stack>
+                ) : (
+                    <Box sx={ownerListStyles.dataGridContainer}>
+                        <DataGrid
+                            rows={rows}
+                            columns={columns}
+                            loading={loading}
+                            disableRowSelectionOnClick
+                            disableColumnMenu
+                            density="comfortable"
+                            getRowId={(r) => r.id}
+                            autoHeight
+                            pageSizeOptions={[10, 25, 50, 100]}
+                            initialState={{
+                                pagination: { paginationModel: { pageSize: 25 } },
+                            }}
+                            localeText={{
+                                ...esES.components.MuiDataGrid.defaultProps.localeText,
+                                noRowsLabel: "No hay registros",
+                                MuiTablePagination: {
+                                    labelRowsPerPage: "Filas por página:",
+                                    labelDisplayedRows: ({ from, to, count }) =>
+                                        `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`,
+                                },
+                            }}
+                            sx={ownerListStyles.dataGrid}
+                        />
+                    </Box>
+                )}
             </Stack>
 
             {/* Confirm Dialog */}
@@ -179,6 +260,7 @@ const OwnerList = () => {
                 onConfirm={handleConfirmDelete}
                 confirmText="Eliminar"
                 cancelText="Cancelar"
+                confirmColor="error"
             />
         </>
     );

@@ -4,6 +4,7 @@ import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
 import OwnerForm from "../components/OwnerForm";
 import { getOwnerById, patchOwner } from "../api/owners.api";
+import { ownerEditStyles } from "../styles/ownerEdit.styles";
 
 /**
  * Page: Edit Owner
@@ -37,7 +38,8 @@ const OwnerEdit = () => {
     const handleSubmit = async (formData) => {
         try {
             setSaving(true);
-            // 🔹 Patch solo los campos modificados (como hacemos en appointments)
+
+            // 🔹 Patch only modified fields
             const updates = {};
             for (const key in formData) {
                 if (formData[key] !== owner[key]) updates[key] = formData[key];
@@ -61,15 +63,15 @@ const OwnerEdit = () => {
 
     if (loading)
         return (
-            <Box display="flex" justifyContent="center" alignItems="center" minHeight={200}>
+            <Box sx={ownerEditStyles.loadingBox}>
                 <CircularProgress />
             </Box>
         );
 
     return (
-        <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
-            <Typography variant="h4" fontWeight={800}>
-                Editar Dueño
+        <Stack sx={ownerEditStyles.container}>
+            <Typography variant="h4" sx={ownerEditStyles.title}>
+                Editar Dueño / Cliente
             </Typography>
             <OwnerForm
                 defaultValues={owner}
