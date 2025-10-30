@@ -1,18 +1,24 @@
 import api from "../../../libs/axios";
 
-/**
- * This module contains API calls related to products.
- */
-
 const BASE = "/api/products";
 
-// Get products with pagination and sorting
+/**
+ * Get products with pagination, sorting and filters.
+ * Supports backend filtering by name, type and category.
+ */
 export const getProducts = async (params = {}) => {
-  // Default values
-  const { page = 0, size = 10, sortBy = "id", direction = "asc" } = params;
+  const {
+    page = 0,
+    size = 10,
+    sortBy = "id",
+    direction = "asc",
+    name,
+    type,
+    category,
+  } = params;
 
   const { data } = await api.get(BASE, {
-    params: { page, size, sortBy, direction },
+    params: { page, size, sortBy, direction, name, type, category },
   });
 
   return data;
@@ -32,15 +38,13 @@ export const createProduct = async (payload) => {
 
 // Update existing product
 export const patchProduct = async (id, payload) => {
-  // Exclude 'id' and 'categoryName' from payload
   const { id: _, categoryName, ...body } = payload;
 
-  // Convert 'price' and 'stock' to numbers if they exist
   if (body.stock !== undefined) {
     body.stock = Number(body.stock);
   }
 
-  const { data } = await api.patch(`${BASE}/${id}`,  body);
+  const { data } = await api.patch(`${BASE}/${id}`, body);
   return data;
 };
 

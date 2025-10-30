@@ -170,6 +170,7 @@ const CategoryList = () => {
                     autoHeight
                     loading={loading}
                     disableRowSelectionOnClick
+                    disableColumnMenu
                     density="compact"
                     getRowId={(r) => r.id}
                     sx={{

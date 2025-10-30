@@ -70,6 +70,7 @@ const UserTable = ({ rows, loading, onDelete }) => {
             columns={columns}
             loading={loading}
             disableRowSelectionOnClick
+            disableColumnMenu
             density="compact"
             sx={{
                 height: 560,

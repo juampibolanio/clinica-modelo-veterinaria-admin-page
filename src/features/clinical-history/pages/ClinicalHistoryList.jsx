@@ -260,6 +260,7 @@ const ClinicalHistoryList = () => {
                         loading={loading}
                         getRowId={(r) => r.id}
                         disableRowSelectionOnClick
+                        disableColumnMenu
                         density="compact"
                         sx={{
                             "& .MuiDataGrid-columnHeaders": { fontWeight: 700 },

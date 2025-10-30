@@ -17,11 +17,8 @@ import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { getProducts, deleteProduct } from "../api/products.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import ProductFilters from "../components/ProductFilters";
 
-/**
- * ProductList
- * Displays a paginated list of products with edit/delete actions and low-stock alerts.
- */
 const ProductList = () => {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
@@ -31,16 +28,19 @@ const ProductList = () => {
     const [page, setPage] = useState(0);
     const [pageSize, setPageSize] = useState(10);
     const [totalElements, setTotalElements] = useState(0);
-
+    const [filters, setFilters] = useState({});
+    const [lowStockProducts, setLowStockProducts] = useState([]);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
 
-    const [lowStockProducts, setLowStockProducts] = useState([]);
-
     // ==============================
-    // Fetch products
+    // Fetch products from backend
     // ==============================
-    const fetchProducts = async (currentPage = page, currentSize = pageSize) => {
+    const fetchProducts = async (
+        currentPage = page,
+        currentSize = pageSize,
+        currentFilters = filters
+    ) => {
         try {
             setLoading(true);
             const data = await getProducts({
@@ -48,13 +48,13 @@ const ProductList = () => {
                 size: currentSize,
                 sortBy: "name",
                 direction: "asc",
+                ...currentFilters,
             });
 
-            const products = data?.content || data || [];
+            const products = data?.content || [];
             setRows(products);
-            setTotalElements(data?.totalElements || products.length);
+            setTotalElements(data?.totalElements || 0);
 
-            // Identify low-stock items (<5)
             const lowStock = products.filter((p) => p.stock < 5);
             setLowStockProducts(lowStock);
         } catch (err) {
@@ -65,16 +65,20 @@ const ProductList = () => {
         }
     };
 
-    // ==============================
-    // Handle product deletion
-    // ==============================
+    // Updated filters
+    const handleFilterChange = (newFilters) => {
+        setFilters(newFilters);
+        setPage(0);
+        fetchProducts(0, pageSize, newFilters);
+    };
+
+    // Delete product
     const handleConfirmDelete = async () => {
         if (!selectedProduct) return;
         try {
             await deleteProduct(selectedProduct.id);
             enqueueSnackbar("Producto eliminado correctamente", { variant: "success" });
-            fetchProducts(0, pageSize);
-            setPage(0);
+            fetchProducts(0, pageSize, filters);
         } catch {
             enqueueSnackbar("Error al eliminar el producto", { variant: "error" });
         } finally {
@@ -82,17 +86,13 @@ const ProductList = () => {
         }
     };
 
-    // ==============================
-    // Effects
-    // ==============================
+    // Load initial data
     useEffect(() => {
-        fetchProducts(page, pageSize);
+        fetchProducts(page, pageSize, filters);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, pageSize]);
 
-    // ==============================
-    // Columns
-    // ==============================
+    // Table columns
     const columns = useMemo(
         () => [
             { field: "id", headerName: "ID", width: 80 },
@@ -105,14 +105,13 @@ const ProductList = () => {
                 renderCell: (params) => {
                     const stock = params.value;
                     const color =
-                        stock === 0 ? "error.main" : stock < 5 ? "warning.main" : "text.primary";
+                        stock === 0
+                            ? "error.main"
+                            : stock < 5
+                                ? "warning.main"
+                                : "text.primary";
                     const fontWeight = stock < 5 ? 700 : 400;
-
-                    return (
-                        <Typography sx={{ color, fontWeight }}>
-                            {stock}
-                        </Typography>
-                    );
+                    return <Typography sx={{ color, fontWeight }}>{stock}</Typography>;
                 },
             },
             { field: "categoryName", headerName: "Categoría", flex: 1 },
@@ -132,7 +131,6 @@ const ProductList = () => {
                                 <EditIcon />
                             </IconButton>
                         </Tooltip>
-
                         <Tooltip title="Eliminar">
                             <IconButton
                                 size="small"
@@ -180,6 +178,9 @@ const ProductList = () => {
 
             <Divider />
 
+            {/* Filters */}
+            <ProductFilters onApply={handleFilterChange} />
+
             {/* Low-stock alert */}
             {lowStockProducts.length > 0 && (
                 <Alert severity="warning" sx={{ borderRadius: 2 }}>
@@ -188,12 +189,13 @@ const ProductList = () => {
                 </Alert>
             )}
 
-            {/* Products table */}
+            {/* DataGrid */}
             <Box sx={{ width: "100%" }}>
                 <DataGrid
                     rows={rows}
                     columns={columns}
                     rowCount={totalElements}
+                    disableColumnMenu
                     paginationMode="server"
                     paginationModel={{ page, pageSize }}
                     onPaginationModelChange={(model) => {
@@ -214,7 +216,7 @@ const ProductList = () => {
                 />
             </Box>
 
-            {/* Delete confirmation */}
+            {/* Confirm delete */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar producto"

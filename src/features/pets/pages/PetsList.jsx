@@ -189,6 +189,7 @@ const PetsList = () => {
                         columns={columns}
                         loading={loading}
                         disableRowSelectionOnClick
+                        disableColumnMenu
                         density="compact"
                         getRowId={(r) => r.id}
                         sx={{
