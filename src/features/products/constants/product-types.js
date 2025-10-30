@@ -1,5 +1,5 @@
 export const PRODUCT_TYPES = [
-  // 💉 Medicamentos y vacunas
+  // Vaccines and Medications
   "Vacuna",
   "Antibiótico",
   "Antiparasitario interno",
@@ -17,7 +17,7 @@ export const PRODUCT_TYPES = [
   "Desinfectante",
   "Antiséptico",
 
-  // 🐾 Higiene y cuidado
+  // Hygiene Products
   "Shampoo",
   "Acondicionador",
   "Colonia",
@@ -28,7 +28,7 @@ export const PRODUCT_TYPES = [
   "Limpiador ótico",
   "Desodorante para mascotas",
 
-  // 🥣 Alimentación
+  // Food Products
   "Alimento seco",
   "Alimento húmedo",
   "Snack",
@@ -36,7 +36,7 @@ export const PRODUCT_TYPES = [
   "Dietético especial",
   "Alimento terapéutico",
 
-  // 🏥 Insumos clínicos
+  // Clinical Supplies
   "Jeringa",
   "Guantes",
   "Gasas",
@@ -51,7 +51,7 @@ export const PRODUCT_TYPES = [
   "Agujas",
   "Tubo de ensayo",
 
-  // 🎀 Accesorios y otros
+  // Accesories and Others
   "Collar",
   "Correa",
   "Transportadora",

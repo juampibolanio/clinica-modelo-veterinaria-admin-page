@@ -7,38 +7,29 @@ import {
     MenuItem,
     Button,
     CircularProgress,
+    InputAdornment,
 } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { useState, useEffect } from "react";
 import { useSnackbar } from "notistack";
 import { getCategories } from "../../products/categories/api/categories.api";
 import { PRODUCT_TYPES } from "../constants/product-types";
+import { productFiltersStyles } from "../styles/productFilters.styles";
 
-/**
- * ProductFilters
- * - Carga categorías desde el backend.
- * - Tipos desde constante local.
- * - Incluye debounce en la búsqueda (500ms).
- */
 const ProductFilters = ({ onApply }) => {
     const { enqueueSnackbar } = useSnackbar();
-
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedType, setSelectedType] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("");
-
     const [categories, setCategories] = useState([]);
     const [loadingCategories, setLoadingCategories] = useState(false);
 
-    // ==============================
-    // Fetch categories from backend
-    // ==============================
     const fetchCategories = async () => {
         try {
             setLoadingCategories(true);
-            const data = await getCategories({ size: 100 }); // traer todas
+            const data = await getCategories({ size: 100 });
             setCategories(data?.content || data || []);
         } catch (err) {
-            console.error(err);
             enqueueSnackbar("Error al cargar las categorías", { variant: "error" });
         } finally {
             setLoadingCategories(false);
@@ -49,24 +40,17 @@ const ProductFilters = ({ onApply }) => {
         fetchCategories();
     }, []);
 
-    // ==============================
-    // Debounce for name search
-    // ==============================
     useEffect(() => {
-        const delayDebounce = setTimeout(() => {
+        const delay = setTimeout(() => {
             onApply({
                 name: searchTerm || undefined,
                 type: selectedType || undefined,
                 category: selectedCategory || undefined,
             });
         }, 500);
-
-        return () => clearTimeout(delayDebounce);
+        return () => clearTimeout(delay);
     }, [searchTerm, selectedType, selectedCategory]);
 
-    // ==============================
-    // Reset filters
-    // ==============================
     const handleReset = () => {
         setSearchTerm("");
         setSelectedType("");
@@ -74,28 +58,32 @@ const ProductFilters = ({ onApply }) => {
         onApply({});
     };
 
-    // ==============================
-    // Render
-    // ==============================
     return (
         <Stack
-            direction={{ xs: "column", sm: "row" }}
+            direction={{ xs: "column", md: "row" }}
             spacing={2}
-            flexWrap="wrap"
             alignItems="center"
+            justifyContent="flex-start"
+            sx={productFiltersStyles.container}
         >
-            {/* Buscar por nombre */}
             <TextField
                 label="Buscar por nombre"
                 variant="outlined"
                 size="small"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 220 }}
+                placeholder="Ej: Alimento para perros"
+                sx={productFiltersStyles.searchField}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon sx={{ color: "primary.main" }} />
+                        </InputAdornment>
+                    ),
+                }}
             />
 
-            {/* Tipo */}
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+            <FormControl size="small" sx={productFiltersStyles.selectControl}>
                 <InputLabel>Tipo</InputLabel>
                 <Select
                     value={selectedType}
@@ -111,8 +99,7 @@ const ProductFilters = ({ onApply }) => {
                 </Select>
             </FormControl>
 
-            {/* Categoría */}
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+            <FormControl size="small" sx={productFiltersStyles.selectControl}>
                 <InputLabel>Categoría</InputLabel>
                 <Select
                     value={selectedCategory}
@@ -136,7 +123,12 @@ const ProductFilters = ({ onApply }) => {
                 </Select>
             </FormControl>
 
-            <Button variant="outlined" color="secondary" onClick={handleReset}>
+            <Button
+                variant="outlined"
+                color="secondary"
+                onClick={handleReset}
+                sx={productFiltersStyles.resetButton}
+            >
                 Limpiar
             </Button>
         </Stack>
