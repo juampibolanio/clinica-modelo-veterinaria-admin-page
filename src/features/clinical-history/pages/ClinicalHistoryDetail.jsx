@@ -7,16 +7,17 @@ import {
     Divider,
     CircularProgress,
     Button,
+    Chip,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import dayjs from "dayjs";
 import { useParams, useNavigate } from "react-router-dom";
 import { getClinicalHistoryById } from "../api/clinical-history.api";
+import { clinicalHistoryDetail as styles } from "../styles/clinicalHistoryDetail.styles";
 
 /**
- * ClinicalHistoryDetail
- * Displays detailed information for a single clinical history record.
+ * ClinicalHistoryDetail — Detailed, styled view of a clinical history record.
  */
 const ClinicalHistoryDetail = () => {
     const { id } = useParams();
@@ -42,7 +43,7 @@ const ClinicalHistoryDetail = () => {
     }, [id]);
 
     // ==============================
-    // UI states
+    // Loading / Empty states
     // ==============================
     if (loading)
         return (
@@ -54,57 +55,63 @@ const ClinicalHistoryDetail = () => {
     if (!item) return null;
 
     // ==============================
-    // UI render
+    // Render
     // ==============================
     return (
         <Stack spacing={3}>
             {/* === Header === */}
-            <Stack direction="row" alignItems="center" flexWrap="wrap" spacing={1}>
+            <Stack
+                direction={styles.header.direction}
+                alignItems={styles.header.alignItems}
+                spacing={styles.header.spacing}
+                justifyContent={styles.header.justifyContent}
+                sx={{ mb: styles.header.mb }}
+            >
                 <Button
                     startIcon={<ArrowBackIcon />}
                     variant="outlined"
                     color="secondary"
                     onClick={() => navigate("/clinical-history")}
+                    sx={styles.backButton}
                 >
                     Volver
                 </Button>
 
-                <Typography variant="h4" fontWeight={800}>
+                <Typography variant="h4" sx={styles.title}>
                     Historia clínica #{item.id}
                 </Typography>
 
                 <Button
                     startIcon={<EditIcon />}
                     variant="contained"
-                    color="primary"
-                    sx={{ ml: "auto" }}
+                    sx={styles.editButton}
                     onClick={() => navigate(`/clinical-history/${id}/edit`)}
                 >
                     Editar
                 </Button>
             </Stack>
 
-            {/* === General Information === */}
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={700} gutterBottom>
+            {/* === Información general === */}
+            <Paper sx={styles.sectionCard}>
+                <Typography variant="h6" sx={styles.sectionTitle}>
                     Información general
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={styles.divider} />
 
                 <GridSection label="Fecha" value={item.date ? dayjs(item.date).format("DD/MM/YYYY") : "-"} />
                 <GridSection label="Tipo de consulta" value={item.consultationType || "-"} />
-                <GridSection label="Motivo" value={item.consultationReason || "-"} />
+                <GridSection label="Motivo de consulta" value={item.consultationReason || "-"} />
                 <GridSection label="Diagnóstico" value={item.diagnosis || "-"} />
                 <GridSection label="Tratamiento" value={item.treatment || "-"} />
                 <GridSection label="Observaciones" value={item.observations || "-"} />
             </Paper>
 
-            {/* === Related Entities === */}
-            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={700} gutterBottom>
-                    Relación con entidades
+            {/* === Relación con entidades === */}
+            <Paper sx={styles.sectionCard}>
+                <Typography variant="h6" sx={styles.sectionTitle}>
+                    Veterinario y mascota asignada
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
+                <Divider sx={styles.divider} />
 
                 <GridSection
                     label="Mascota"
@@ -113,7 +120,13 @@ const ClinicalHistoryDetail = () => {
                         <Button
                             variant="outlined"
                             size="small"
+                            color="primary"
                             onClick={() => navigate(`/pets/${item.petId}`)}
+                            sx={{
+                                textTransform: "none",
+                                borderRadius: 2,
+                                fontWeight: 600,
+                            }}
                         >
                             Ver mascota
                         </Button>
@@ -125,47 +138,40 @@ const ClinicalHistoryDetail = () => {
                 />
             </Paper>
 
-            {/* === Used Products === */}
+            {/* === Productos utilizados === */}
             {item.usedProducts && item.usedProducts.length > 0 && (
-                <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
-                    <Typography variant="h6" fontWeight={700} gutterBottom>
+                <Paper sx={styles.sectionCard}>
+                    <Typography variant="h6" sx={styles.sectionTitle}>
                         Productos utilizados
                     </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    {item.usedProducts.map((prod) => (
-                        <Box key={prod.id} sx={{ py: 0.5 }}>
-                            <Typography>
-                                • <b>{prod.name}</b> — Stock restante: {prod.stock ?? "N/A"}
-                            </Typography>
-                        </Box>
-                    ))}
+                    <Divider sx={styles.divider} />
+                    <Stack direction="row" flexWrap="wrap" gap={1.2}>
+                        {item.usedProducts.map((prod) => (
+                            <Chip
+                                key={prod.id}
+                                label={`${prod.name} (Stock: ${prod.stock ?? "N/A"})`}
+                                sx={styles.productChip}
+                            />
+                        ))}
+                    </Stack>
                 </Paper>
             )}
         </Stack>
     );
 };
 
-/**
- * GridSection
- * Small reusable component for displaying label-value pairs with optional action button.
- */
+// ==============================
+// Subcomponentes reutilizables
+// ==============================
 const GridSection = ({ label, value, action }) => (
-    <Box
-        sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            py: 0.5,
-            flexWrap: "wrap",
-        }}
-    >
-        <Typography variant="subtitle2" color="text.secondary" sx={{ minWidth: 180 }}>
+    <Box sx={styles.gridRow}>
+        <Typography variant="subtitle2" sx={styles.gridLabel}>
             {label}
         </Typography>
-        <Typography variant="body1" fontWeight={500}>
+        <Typography variant="body1" sx={styles.gridValue}>
             {value}
         </Typography>
-        {action && <Box sx={{ ml: 2 }}>{action}</Box>}
+        {action && <Box sx={styles.gridAction}>{action}</Box>}
     </Box>
 );
 

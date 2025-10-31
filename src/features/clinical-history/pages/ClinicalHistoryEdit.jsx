@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Stack, Typography, CircularProgress, Box } from "@mui/material";
+import { Stack, Typography, CircularProgress, Box, Button } from "@mui/material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import ClinicalHistoryForm from "../components/ClinicalHistoryForm";
@@ -39,16 +39,18 @@ const ClinicalHistoryEdit = () => {
     }, [id, navigate, enqueueSnackbar]);
 
     // ==============================
-    // Handle update
+    // Handle update (PATCH)
     // ==============================
     const handleSubmit = async (form) => {
         try {
             setSaving(true);
 
-            // Only send modified fields
+            // Solo enviar campos modificados (excluye usedProductIds)
             const updates = {};
             Object.keys(form).forEach((k) => {
-                if (form[k] !== item[k]) updates[k] = form[k];
+                if (k !== "usedProductIds" && form[k] !== item[k]) {
+                    updates[k] = form[k];
+                }
             });
 
             if (Object.keys(updates).length === 0) {
@@ -57,10 +59,10 @@ const ClinicalHistoryEdit = () => {
             }
 
             await patchClinicalHistory(id, updates);
-            enqueueSnackbar("Historia actualizada", { variant: "success" });
+            enqueueSnackbar("Historia actualizada correctamente", { variant: "success" });
             navigate(`/clinical-history/${id}`);
         } catch {
-            enqueueSnackbar("No se pudo actualizar", { variant: "error" });
+            enqueueSnackbar("No se pudo actualizar la historia clínica", { variant: "error" });
         } finally {
             setSaving(false);
         }
@@ -79,11 +81,26 @@ const ClinicalHistoryEdit = () => {
     if (!item) return null;
 
     return (
-        <Stack spacing={2}>
-            <Typography variant="h4" fontWeight={800}>
-                Editar historia clínica
-            </Typography>
+        <Stack spacing={3}>
+            {/* Header */}
+            <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+            >
+                <Typography variant="h4" fontWeight={800}>
+                    Editar historia clínica
+                </Typography>
+                <Button
+                    variant="outlined"
+                    color="secondary"
+                    onClick={() => navigate(-1)}
+                >
+                    Volver
+                </Button>
+            </Stack>
 
+            {/* Formulario */}
             <ClinicalHistoryForm
                 initialValues={item}
                 onSubmit={handleSubmit}

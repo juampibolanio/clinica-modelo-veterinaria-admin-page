@@ -1,23 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
 import {
-    Grid,
+    Stack,
     TextField,
     MenuItem,
-    Stack,
     Button,
     CircularProgress,
     Chip,
+    Box,
+    Typography,
 } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { CONSULTATION_TYPES } from "../constants/consultation-types";
-import { COMMON_DIAGNOSES } from "../constants/common-diagnoses";
 import { getAllUsers } from "../../users/api/users.api";
 import { getProducts } from "../../products/api/products.api";
 import { useAuth } from "../../auth/hooks/useAuth";
+import { CONSULTATION_TYPES } from "../constants/consultation-types";
+import { COMMON_DIAGNOSES } from "../constants/common-diagnoses";
+import { clinicalHistoryFormStyles } from "../styles/clinicalHistoryForm.styles";
 
-/**
- * Default form structure
- */
 const emptyForm = {
     consultationType: "",
     consultationReason: "",
@@ -32,10 +31,9 @@ const emptyForm = {
 };
 
 /**
- * ClinicalHistoryForm
- * Manages creation and edition of clinical histories with validation and product linking.
+ * ClinicalHistoryForm — visualmente igual al formulario de Turnos
  */
-const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
+const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
     const [form, setForm] = useState(emptyForm);
     const [users, setUsers] = useState([]);
     const [products, setProducts] = useState([]);
@@ -44,20 +42,16 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
 
     const { user } = useAuth();
 
-    // ==============================
-    // Load veterinarians and products
-    // ==============================
+    // Fetch veterinarios y productos
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoadingUsers(true);
                 setLoadingProducts(true);
-
                 const [usersRes, productsRes] = await Promise.all([
                     getAllUsers(),
                     getProducts(),
                 ]);
-
                 setUsers(usersRes || []);
                 setProducts(productsRes?.content || productsRes || []);
             } finally {
@@ -68,9 +62,7 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         fetchData();
     }, []);
 
-    // ==============================
-    // Set initial values
-    // ==============================
+    // Inicializa valores
     useEffect(() => {
         setForm((prev) => ({
             ...prev,
@@ -79,9 +71,6 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         }));
     }, [initialValues, user]);
 
-    // ==============================
-    // Validation logic
-    // ==============================
     const canSubmit = useMemo(() => {
         return (
             form.consultationType &&
@@ -92,15 +81,12 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         );
     }, [form]);
 
-    // ==============================
     // Handlers
-    // ==============================
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((f) => ({ ...f, [name]: value }));
     };
 
-    // Handle multiple product selection
     const handleProductSelect = (e) => {
         const value = e.target.value;
         setForm((f) => ({
@@ -120,213 +106,237 @@ const ClinicalHistoryForm = ({ initialValues, onSubmit, saving }) => {
         onSubmit?.(payload);
     };
 
-    // ==============================
-    // UI
-    // ==============================
+    // Loader inicial
+    if (loadingUsers && loadingProducts)
+        return (
+            <Stack alignItems="center" mt={4}>
+                <CircularProgress />
+            </Stack>
+        );
+
     return (
-        <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-                {/*  Consultation Type  */}
-                <Grid item xs={12} md={4}>
-                    <TextField
-                        select
-                        label="Tipo de consulta"
-                        name="consultationType"
-                        fullWidth
-                        value={form.consultationType || ""}
-                        onChange={handleChange}
-                        required
-                    >
-                        {CONSULTATION_TYPES.map((t) => (
-                            <MenuItem key={t} value={t}>
-                                {t}
-                            </MenuItem>
-                        ))}
-                    </TextField>
-                </Grid>
+        <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={clinicalHistoryFormStyles.form}
+        >
+            <Stack spacing={2}>
+                <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    sx={{
+                        background: "linear-gradient(135deg, #3781E3 0%, #7027A0 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                    }}
+                >
+                    Datos de la Historia Clínica
+                </Typography>
 
-                {/* Consultation Reason  */}
-                <Grid item xs={12} md={4}>
-                    <TextField
-                        label="Motivo de consulta"
-                        name="consultationReason"
-                        fullWidth
-                        value={form.consultationReason || ""}
-                        onChange={handleChange}
-                        required
-                    />
-                </Grid>
+                {/* Tipo de consulta */}
+                <TextField
+                    select
+                    label="Tipo de consulta"
+                    name="consultationType"
+                    value={form.consultationType || ""}
+                    onChange={handleChange}
+                    required
+                    InputLabelProps={{ shrink: true }}
+                    sx={clinicalHistoryFormStyles.textField}
+                >
+                    {CONSULTATION_TYPES.map((t) => (
+                        <MenuItem key={t} value={t}>
+                            {t}
+                        </MenuItem>
+                    ))}
+                </TextField>
 
-                {/* Date */}
-                <Grid item xs={12} md={4}>
-                    <TextField
-                        type="date"
-                        label="Fecha"
-                        name="date"
-                        fullWidth
-                        value={form.date || ""}
-                        onChange={handleChange}
-                        InputLabelProps={{ shrink: true }}
-                        required
-                    />
-                </Grid>
+                {/* Motivo */}
+                <TextField
+                    label="Motivo de consulta"
+                    name="consultationReason"
+                    value={form.consultationReason || ""}
+                    onChange={handleChange}
+                    required
+                    sx={clinicalHistoryFormStyles.textField}
+                />
 
-                {/* Diagnosis */}
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        select
-                        label="Diagnóstico"
-                        name="diagnosis"
-                        fullWidth
-                        value={form.diagnosis || ""}
-                        onChange={handleChange}
-                    >
-                        {COMMON_DIAGNOSES.map((d) => (
-                            <MenuItem key={d} value={d}>
-                                {d}
-                            </MenuItem>
-                        ))}
-                        <MenuItem value="Otro">Otro...</MenuItem>
-                    </TextField>
-                </Grid>
+                {/* Fecha */}
+                <TextField
+                    type="date"
+                    label="Fecha"
+                    name="date"
+                    value={form.date || ""}
+                    onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                    sx={clinicalHistoryFormStyles.textField}
+                />
 
-                {/* Custom Diagnosis */}
+                {/* Diagnóstico */}
+                <TextField
+                    select
+                    label="Diagnóstico"
+                    name="diagnosis"
+                    value={form.diagnosis || ""}
+                    onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    sx={clinicalHistoryFormStyles.textField}
+                >
+                    {COMMON_DIAGNOSES.map((d) => (
+                        <MenuItem key={d} value={d}>
+                            {d}
+                        </MenuItem>
+                    ))}
+                    <MenuItem value="Otro">Otro...</MenuItem>
+                </TextField>
+
+                {/* Diagnóstico personalizado */}
                 {form.diagnosis === "Otro" && (
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            label="Especificar diagnóstico"
-                            name="customDiagnosis"
-                            fullWidth
-                            value={form.customDiagnosis || ""}
-                            onChange={handleChange}
-                            required
-                        />
-                    </Grid>
+                    <TextField
+                        label="Especificar diagnóstico"
+                        name="customDiagnosis"
+                        fullWidth
+                        value={form.customDiagnosis || ""}
+                        onChange={handleChange}
+                        required
+                        sx={clinicalHistoryFormStyles.textField}
+                    />
                 )}
 
-                {/* Treatment */}
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        label="Tratamiento"
-                        name="treatment"
-                        fullWidth
-                        value={form.treatment || ""}
-                        onChange={handleChange}
-                        multiline
-                        minRows={2}
-                    />
-                </Grid>
+                {/* Tratamiento */}
+                <TextField
+                    label="Tratamiento"
+                    name="treatment"
+                    fullWidth
+                    value={form.treatment || ""}
+                    onChange={handleChange}
+                    multiline
+                    rows={2}
+                    sx={clinicalHistoryFormStyles.textField}
+                />
 
-                {/* Used Products */}
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        select
-                        label="Productos utilizados"
-                        name="usedProductIds"
-                        fullWidth
-                        SelectProps={{
-                            multiple: true,
-                            renderValue: (selected) => (
-                                <Stack direction="row" flexWrap="wrap" gap={1}>
-                                    {selected.map((id) => {
-                                        const prod = products.find((p) => p.id === id);
-                                        return (
-                                            <Chip
-                                                key={id}
-                                                label={prod ? prod.name : id}
-                                                size="small"
-                                            />
-                                        );
-                                    })}
-                                </Stack>
-                            ),
-                        }}
-                        value={form.usedProductIds || []}
-                        onChange={handleProductSelect}
-                        disabled={loadingProducts}
-                    >
-                        {products.map((p) => (
+                {/* Productos utilizados */}
+                <TextField
+                    select
+                    label="Productos utilizados"
+                    name="usedProductIds"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    SelectProps={{
+                        multiple: true,
+                        renderValue: (selected) => (
+                            <Stack direction="row" flexWrap="wrap" gap={1} sx={{ p: 0.3 }}>
+                                {selected.map((id) => {
+                                    const prod = products.find((p) => p.id === id);
+                                    return (
+                                        <Chip
+                                            key={id}
+                                            label={prod ? prod.name : id}
+                                            size="small"
+                                            sx={clinicalHistoryFormStyles.chip}
+                                        />
+                                    );
+                                })}
+                            </Stack>
+                        ),
+                    }}
+                    value={form.usedProductIds || []}
+                    onChange={handleProductSelect}
+                    disabled={loadingProducts}
+                    sx={clinicalHistoryFormStyles.textField}
+                >
+                    {loadingProducts ? (
+                        <MenuItem disabled>
+                            <CircularProgress size={18} sx={{ mr: 1 }} /> Cargando...
+                        </MenuItem>
+                    ) : (
+                        products.map((p) => (
                             <MenuItem key={p.id} value={p.id}>
                                 {p.name} — Stock: {p.stock}
                             </MenuItem>
-                        ))}
-                    </TextField>
-                </Grid>
+                        ))
+                    )}
+                </TextField>
 
-                {/* Observations */}
-                <Grid item xs={12}>
-                    <TextField
-                        label="Observaciones"
-                        name="observations"
-                        fullWidth
-                        value={form.observations || ""}
-                        onChange={handleChange}
-                        multiline
-                        minRows={2}
-                    />
-                </Grid>
+                {/* Observaciones */}
+                <TextField
+                    label="Observaciones"
+                    name="observations"
+                    fullWidth
+                    value={form.observations || ""}
+                    onChange={handleChange}
+                    multiline
+                    rows={2}
+                    sx={clinicalHistoryFormStyles.textField}
+                />
 
-                {/* Veterinarian */}
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        select
-                        label="Veterinario"
-                        name="veterinarianId"
-                        fullWidth
-                        value={form.veterinarianId || ""}
-                        onChange={handleChange}
-                        required
-                        disabled={loadingUsers}
-                    >
-                        {loadingUsers ? (
-                            <MenuItem disabled>
-                                <CircularProgress size={18} sx={{ mr: 1 }} /> Cargando...
+                {/* Veterinario */}
+                <TextField
+                    select
+                    label="Veterinario"
+                    name="veterinarianId"
+                    fullWidth
+                    value={form.veterinarianId || ""}
+                    onChange={handleChange}
+                    required
+                    disabled={loadingUsers}
+                    InputLabelProps={{ shrink: true }}
+                    sx={clinicalHistoryFormStyles.textField}
+                >
+                    {loadingUsers ? (
+                        <MenuItem disabled>
+                            <CircularProgress size={18} sx={{ mr: 1 }} /> Cargando...
+                        </MenuItem>
+                    ) : (
+                        users.map((u) => (
+                            <MenuItem key={u.id} value={u.id}>
+                                {u.name} {u.surname} ({u.role})
                             </MenuItem>
+                        ))
+                    )}
+                </TextField>
+
+                {/* ID Mascota */}
+                <TextField
+                    label="ID Mascota"
+                    name="petId"
+                    type="number"
+                    fullWidth
+                    value={form.petId || ""}
+                    onChange={handleChange}
+                    required
+                    disabled
+                    sx={clinicalHistoryFormStyles.textField}
+                />
+
+                {/* Botones */}
+                <Stack sx={clinicalHistoryFormStyles.actionsContainer}>
+                    <Button
+                        variant="outlined"
+                        color="secondary"
+                        onClick={() => window.history.back()}
+                        sx={clinicalHistoryFormStyles.cancelButton}
+                    >
+                        Cancelar
+                    </Button>
+
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={!canSubmit || saving}
+                        sx={clinicalHistoryFormStyles.submitButton}
+                    >
+                        {saving ? (
+                            <CircularProgress size={22} sx={{ color: "white" }} />
                         ) : (
-                            users.map((u) => (
-                                <MenuItem key={u.id} value={u.id}>
-                                    {u.name} {u.surname} ({u.role})
-                                </MenuItem>
-                            ))
+                            "Guardar historia"
                         )}
-                    </TextField>
-                </Grid>
-
-                {/* Pet ID */}
-                <Grid item xs={12} md={6}>
-                    <TextField
-                        label="ID Mascota"
-                        name="petId"
-                        type="number"
-                        fullWidth
-                        value={form.petId || ""}
-                        onChange={handleChange}
-                        required
-                        disabled
-                    />
-                </Grid>
-
-                {/* Buttons */}
-                <Grid item xs={12}>
-                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
-                        <Button
-                            variant="outlined"
-                            color="secondary"
-                            onClick={() => window.history.back()}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            type="submit"
-                            variant="contained"
-                            disabled={!canSubmit || saving}
-                        >
-                            {saving ? "Guardando..." : "Guardar"}
-                        </Button>
-                    </Stack>
-                </Grid>
-            </Grid>
-        </form>
+                    </Button>
+                </Stack>
+            </Stack>
+        </Box>
     );
 };
 

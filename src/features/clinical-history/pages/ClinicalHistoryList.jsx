@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
     Box,
     Stack,
@@ -9,34 +9,39 @@ import {
     MenuItem,
     Button,
     Divider,
+    Card,
     FormControl,
     InputLabel,
     Select,
+    useTheme,
+    useMediaQuery,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import { esES } from "@mui/x-data-grid/locales";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
+import AddIcon from "@mui/icons-material/NoteAddRounded";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
-import { listClinicalHistory, deleteClinicalHistory } from "../api/clinical-history.api";
+import {
+    listClinicalHistory,
+    deleteClinicalHistory,
+} from "../api/clinical-history.api";
 import { CONSULTATION_TYPES } from "../constants/consultation-types";
+import { clinicalHistoryListStyles } from "../styles/clinicalHistoryList.styles";
 
-/**
- * ClinicalHistoryList
- * Displays a searchable, paginated list of all clinical histories.
- * Allows filtering by consultation type, date range, and keyword.
- */
 const ClinicalHistoryList = () => {
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
 
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
 
@@ -49,37 +54,24 @@ const ClinicalHistoryList = () => {
 
     const debounceRef = useRef(null);
 
-    // ==============================
-    // Data Fetcher
-    // ==============================
     const fetchData = async () => {
         try {
             setLoading(true);
             const data = await listClinicalHistory({ ...filters, page: 0, size: 100 });
-            if (Array.isArray(data?.content)) {
-                setRows(data.content);
-            } else {
-                setRows([]);
-            }
-        } catch (err) {
-            console.error("Error loading clinical histories:", err);
+            setRows(Array.isArray(data?.content) ? data.content : []);
+        } catch {
             enqueueSnackbar("Error al cargar historias clínicas", { variant: "error" });
         } finally {
             setLoading(false);
         }
     };
 
-    // Auto-refresh on filter changes with debounce
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(fetchData, 400);
         return () => clearTimeout(debounceRef.current);
-        // eslint-disable-next-line
     }, [filters]);
 
-    // ==============================
-    // Delete handlers
-    // ==============================
     const handleAskDelete = (row) => {
         setSelectedItem(row);
         setConfirmOpen(true);
@@ -88,7 +80,9 @@ const ClinicalHistoryList = () => {
     const handleConfirmDelete = async () => {
         try {
             await deleteClinicalHistory(selectedItem.id);
-            enqueueSnackbar("Historia clínica eliminada correctamente", { variant: "success" });
+            enqueueSnackbar("Historia clínica eliminada correctamente ✅", {
+                variant: "success",
+            });
             fetchData();
         } catch {
             enqueueSnackbar("Error al eliminar la historia clínica", { variant: "error" });
@@ -97,9 +91,6 @@ const ClinicalHistoryList = () => {
         }
     };
 
-    // ==============================
-    // Columns for DataGrid
-    // ==============================
     const columns = useMemo(
         () => [
             {
@@ -110,62 +101,44 @@ const ClinicalHistoryList = () => {
                     params.row.date ? dayjs(params.row.date).format("DD/MM/YYYY") : "—",
             },
             { field: "consultationType", headerName: "Tipo", flex: 1 },
-            {
-                field: "petName",
-                headerName: "Mascota",
-                flex: 1.2,
-                renderCell: (params) => params.row.petName || "—",
-            },
-            {
-                field: "veterinarianName",
-                headerName: "Veterinario",
-                flex: 1.2,
-                renderCell: (params) => params.row.veterinarianName || "—",
-            },
-            {
-                field: "consultationReason",
-                headerName: "Motivo",
-                flex: 1.6,
-                renderCell: (params) => params.row.consultationReason || "—",
-            },
-            {
-                field: "diagnosis",
-                headerName: "Diagnóstico",
-                flex: 1.5,
-                renderCell: (params) => params.row.diagnosis || "—",
-            },
+            { field: "petName", headerName: "Mascota", flex: 1.2 },
+            { field: "veterinarianName", headerName: "Veterinario", flex: 1.2 },
+            { field: "consultationReason", headerName: "Motivo", flex: 1.6 },
+            { field: "diagnosis", headerName: "Diagnóstico", flex: 1.5 },
             {
                 field: "actions",
                 headerName: "Acciones",
                 sortable: false,
                 width: 180,
+                align: "center",
+                headerAlign: "center",
                 renderCell: (params) => (
-                    <Stack direction="row" spacing={1}>
-                        <Tooltip title="Ver detalle">
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                        <Tooltip title="Ver detalle" arrow>
                             <IconButton
                                 size="small"
                                 color="primary"
                                 onClick={() => navigate(`/clinical-history/${params.row.id}`)}
                             >
-                                <VisibilityIcon />
+                                <VisibilityIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Editar">
+                        <Tooltip title="Editar" arrow>
                             <IconButton
                                 size="small"
                                 color="secondary"
                                 onClick={() => navigate(`/clinical-history/${params.row.id}/edit`)}
                             >
-                                <EditIcon />
+                                <EditIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
-                        <Tooltip title="Eliminar">
+                        <Tooltip title="Eliminar" arrow>
                             <IconButton
                                 size="small"
                                 color="error"
                                 onClick={() => handleAskDelete(params.row)}
                             >
-                                <DeleteIcon />
+                                <DeleteIcon fontSize="small" />
                             </IconButton>
                         </Tooltip>
                     </Stack>
@@ -175,33 +148,31 @@ const ClinicalHistoryList = () => {
         [navigate]
     );
 
-    // ==============================
-    // UI
-    // ==============================
     return (
         <>
-            <Stack spacing={2} sx={{ p: { xs: 1, sm: 2 } }}>
-                {/* === Header === */}
+            <Stack spacing={3}>
+                {/* Header */}
                 <Stack
                     direction={{ xs: "column", sm: "row" }}
                     justifyContent="space-between"
-                    alignItems={{ xs: "stretch", sm: "center" }}
-                    spacing={1}
+                    alignItems={{ xs: "flex-start", sm: "center" }}
+                    sx={clinicalHistoryListStyles.header}
                 >
-                    <Typography variant="h4" fontWeight={800}>
+                    <Typography variant="h4" sx={clinicalHistoryListStyles.title}>
                         Historias Clínicas
                     </Typography>
 
                 </Stack>
 
-                {/* === Filters === */}
+                {/* Filters */}
                 <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={1}
-                    flexWrap="wrap"
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    justifyContent="center"
                     alignItems="center"
+                    sx={clinicalHistoryListStyles.filtersContainer}
                 >
-                    <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <FormControl size="small" sx={clinicalHistoryListStyles.filterField}>
                         <InputLabel>Tipo</InputLabel>
                         <Select
                             value={filters.consultationType}
@@ -226,6 +197,7 @@ const ClinicalHistoryList = () => {
                         InputLabelProps={{ shrink: true }}
                         value={filters.fromDate}
                         onChange={(e) => setFilters((f) => ({ ...f, fromDate: e.target.value }))}
+                        sx={clinicalHistoryListStyles.filterField}
                     />
 
                     <TextField
@@ -235,6 +207,7 @@ const ClinicalHistoryList = () => {
                         InputLabelProps={{ shrink: true }}
                         value={filters.toDate}
                         onChange={(e) => setFilters((f) => ({ ...f, toDate: e.target.value }))}
+                        sx={clinicalHistoryListStyles.filterField}
                     />
 
                     <TextField
@@ -242,50 +215,115 @@ const ClinicalHistoryList = () => {
                         size="small"
                         value={filters.keyword}
                         onChange={(e) => setFilters((f) => ({ ...f, keyword: e.target.value }))}
-                        sx={{ minWidth: 300 }}
+                        sx={{ ...clinicalHistoryListStyles.filterField, minWidth: 280 }}
                     />
 
-                    <IconButton onClick={fetchData}>
-                        <SearchIcon />
-                    </IconButton>
+                    <Tooltip title="Buscar" arrow>
+                        <IconButton
+                            color="primary"
+                            onClick={fetchData}
+                            sx={clinicalHistoryListStyles.searchButton}
+                        >
+                            <SearchIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
 
-                <Divider />
+                <Divider sx={clinicalHistoryListStyles.divider} />
 
-                {/* === Table === */}
-                <Box sx={{ height: 560, width: "100%" }}>
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        loading={loading}
-                        getRowId={(r) => r.id}
-                        disableRowSelectionOnClick
-                        disableColumnMenu
-                        density="compact"
-                        sx={{
-                            "& .MuiDataGrid-columnHeaders": { fontWeight: 700 },
-                            "@media (max-width:600px)": {
-                                "& .MuiDataGrid-cell--textLeft": { fontSize: "0.85rem" },
-                            },
-                        }}
-                    />
-                </Box>
+                {/* ✅ Responsive section */}
+                {isSmall ? (
+                    <Stack spacing={2}>
+                        {rows.length > 0 ? (
+                            rows.map((r) => (
+                                <Card key={r.id} sx={clinicalHistoryListStyles.mobileCard}>
+                                    <Typography sx={clinicalHistoryListStyles.mobileTitle}>
+                                        {r.petName} — {r.consultationType}
+                                    </Typography>
+                                    <Typography sx={clinicalHistoryListStyles.mobileSubtitle}>
+                                        {r.date ? dayjs(r.date).format("DD/MM/YYYY") : "Sin fecha"}
+                                    </Typography>
+                                    <Typography sx={clinicalHistoryListStyles.mobileMetadata}>
+                                        Veterinario: {r.veterinarianName || "—"}
+                                    </Typography>
+                                    <Typography sx={clinicalHistoryListStyles.mobileMetadata}>
+                                        Diagnóstico: {r.diagnosis || "—"}
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} mt={1}>
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => navigate(`/clinical-history/${r.id}`)}
+                                            sx={clinicalHistoryListStyles.actionButton}
+                                        >
+                                            <VisibilityIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="secondary"
+                                            onClick={() => navigate(`/clinical-history/${r.id}/edit`)}
+                                            sx={clinicalHistoryListStyles.actionButton}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleAskDelete(r)}
+                                            sx={clinicalHistoryListStyles.actionButton}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Stack>
+                                </Card>
+                            ))
+                        ) : (
+                            <Typography sx={clinicalHistoryListStyles.emptyMessage}>
+                                No hay registros
+                            </Typography>
+                        )}
+                    </Stack>
+                ) : (
+                    <Box sx={clinicalHistoryListStyles.dataGridContainer}>
+                        <DataGrid
+                            rows={rows}
+                            columns={columns}
+                            loading={loading}
+                            disableRowSelectionOnClick
+                            disableColumnMenu
+                            density="comfortable"
+                            getRowId={(r) => r.id}
+                            autoHeight
+                            pageSizeOptions={[10, 25, 50, 100]}
+                            initialState={{
+                                pagination: { paginationModel: { pageSize: 25 } },
+                            }}
+                            localeText={{
+                                ...esES.components.MuiDataGrid.defaultProps.localeText,
+                                noRowsLabel: "No hay registros",
+                                MuiTablePagination: {
+                                    labelRowsPerPage: "Filas por página:",
+                                    labelDisplayedRows: ({ from, to, count }) =>
+                                        `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`,
+                                },
+                            }}
+                            sx={clinicalHistoryListStyles.dataGrid}
+                        />
+                    </Box>
+                )}
             </Stack>
 
-            {/* === Confirm Dialog === */}
+            {/* Confirm Dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar historia clínica"
                 message={
                     selectedItem
-                        ? `¿Seguro que deseas eliminar la historia del paciente ${selectedItem.petName || "desconocido"
-                        }?`
+                        ? `¿Seguro que deseas eliminar la historia clínica de ${selectedItem.petName || "la mascota seleccionada"}?`
                         : "¿Confirmar eliminación?"
                 }
                 onClose={() => setConfirmOpen(false)}
                 onConfirm={handleConfirmDelete}
                 confirmText="Eliminar"
                 cancelText="Cancelar"
+                confirmColor="error"
             />
         </>
     );

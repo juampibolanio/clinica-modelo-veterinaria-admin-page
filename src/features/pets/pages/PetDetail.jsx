@@ -17,6 +17,7 @@ import PetsIcon from "@mui/icons-material/Pets";
 import PersonIcon from "@mui/icons-material/PersonRounded";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import MedicalInformationIcon from "@mui/icons-material/MedicalInformation";
+import VaccinesIcon from "@mui/icons-material/VaccinesRounded";
 import dayjs from "dayjs";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -25,6 +26,8 @@ import { getPetById, getPetsByOwnerId } from "../api/pets.api";
 import { getOwnerById } from "../../owners/api/owners.api";
 import { listAppointments } from "../../appointments/api/appointments.api";
 import { listClinicalHistory } from "../../clinical-history/api/clinical-history.api";
+import { listAppliedVaccines } from "../../applied-vaccines/api/applied-vaccines.api";
+
 import { SectionList } from "../components/SectionList";
 import { STATUS_COLOR, formatStatus } from "../../appointments/utils/utils";
 import { petDetailStyles } from "../styles/petDetail.styles";
@@ -39,11 +42,13 @@ const PetDetail = () => {
     const [relatedPets, setRelatedPets] = useState([]);
     const [appointments, setAppointments] = useState([]);
     const [clinicalHistories, setClinicalHistories] = useState([]);
+    const [appliedVaccines, setAppliedVaccines] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [loadingRelated, setLoadingRelated] = useState(true);
     const [loadingAppointments, setLoadingAppointments] = useState(true);
     const [loadingClinicalHistories, setLoadingClinicalHistories] = useState(true);
+    const [loadingVaccines, setLoadingVaccines] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -54,29 +59,38 @@ const PetDetail = () => {
                 const ownerId = petData.owner?.id || petData.ownerId;
                 if (!ownerId) throw new Error("El ID del dueño no está disponible");
 
-                const [ownerData, petsData, appointmentsData, historiesData] = await Promise.all([
-                    getOwnerById(ownerId),
-                    getPetsByOwnerId(ownerId),
-                    listAppointments({
-                        petId: id,
-                        page: 0,
-                        size: 5,
-                        sortBy: "date",
-                        direction: "desc",
-                    }),
-                    listClinicalHistory({
-                        petId: id,
-                        page: 0,
-                        size: 5,
-                        sortBy: "date",
-                        direction: "desc",
-                    }),
-                ]);
+                const [ownerData, petsData, appointmentsData, historiesData, vaccinesData] =
+                    await Promise.all([
+                        getOwnerById(ownerId),
+                        getPetsByOwnerId(ownerId),
+                        listAppointments({
+                            petId: id,
+                            page: 0,
+                            size: 5,
+                            sortBy: "date",
+                            direction: "desc",
+                        }),
+                        listClinicalHistory({
+                            petId: id,
+                            page: 0,
+                            size: 5,
+                            sortBy: "date",
+                            direction: "desc",
+                        }),
+                        listAppliedVaccines({
+                            petId: id,
+                            page: 0,
+                            size: 5,
+                            sortBy: "date",
+                            direction: "desc",
+                        }),
+                    ]);
 
                 setOwner(ownerData);
                 setRelatedPets(petsData || []);
                 setAppointments(appointmentsData.content || []);
                 setClinicalHistories(historiesData.content || []);
+                setAppliedVaccines(vaccinesData.content || []);
             } catch (error) {
                 console.error("Error al cargar datos:", error);
                 enqueueSnackbar("Error al cargar la información de la mascota", { variant: "error" });
@@ -86,6 +100,7 @@ const PetDetail = () => {
                 setLoadingRelated(false);
                 setLoadingAppointments(false);
                 setLoadingClinicalHistories(false);
+                setLoadingVaccines(false);
             }
         };
 
@@ -104,7 +119,7 @@ const PetDetail = () => {
 
     return (
         <Stack spacing={4} sx={petDetailStyles.container}>
-            {/* HEADER */}
+            {/* === HEADER === */}
             <Stack direction={{ xs: "column", sm: "row" }} alignItems="center" spacing={2}>
                 <Button
                     startIcon={<ArrowBackIcon />}
@@ -130,7 +145,7 @@ const PetDetail = () => {
                 </Button>
             </Stack>
 
-            {/* INFORMACIÓN GENERAL */}
+            {/* === INFORMACIÓN GENERAL === */}
             <Paper elevation={0} sx={petDetailStyles.infoCard}>
                 <Typography variant="h6" fontWeight={700} gutterBottom>
                     Información general
@@ -144,12 +159,19 @@ const PetDetail = () => {
                         { label: "Raza", value: pet.breed || "-" },
                         {
                             label: "Sexo",
-                            value: pet.gender === "MALE" ? "Macho" : pet.gender === "FEMALE" ? "Hembra" : "-",
+                            value:
+                                pet.gender === "MALE"
+                                    ? "Macho"
+                                    : pet.gender === "FEMALE"
+                                        ? "Hembra"
+                                        : "-",
                         },
                         { label: "Peso", value: pet.weight ? `${pet.weight} kg` : "-" },
                         {
                             label: "Fecha de nacimiento",
-                            value: pet.birthDate ? dayjs(pet.birthDate).format("DD/MM/YYYY") : "-",
+                            value: pet.birthDate
+                                ? dayjs(pet.birthDate).format("DD/MM/YYYY")
+                                : "-",
                         },
                         { label: "Color", value: pet.color || "-" },
                         { label: "Alergias", value: pet.allergies || "-" },
@@ -166,7 +188,7 @@ const PetDetail = () => {
                 </Grid>
             </Paper>
 
-            {/* DUEÑO */}
+            {/* === DUEÑO === */}
             {owner && (
                 <SectionList
                     icon={<PersonIcon color="primary" />}
@@ -194,7 +216,7 @@ const PetDetail = () => {
                 />
             )}
 
-            {/* OTRAS MASCOTAS */}
+            {/* === OTRAS MASCOTAS === */}
             <SectionList
                 icon={<PetsIcon color="primary" />}
                 title="Otras mascotas del dueño"
@@ -227,7 +249,7 @@ const PetDetail = () => {
                 )}
             />
 
-            {/* HISTORIAS CLÍNICAS */}
+            {/* === HISTORIAS CLÍNICAS === */}
             <SectionList
                 icon={<MedicalInformationIcon color="primary" />}
                 title="Historias clínicas"
@@ -244,9 +266,7 @@ const PetDetail = () => {
                         <Typography sx={{ minWidth: 180, fontWeight: 600 }}>
                             {h.consultationType}
                         </Typography>
-                        <Typography flex={1}>
-                            {h.diagnosis || "Sin diagnóstico"}
-                        </Typography>
+                        <Typography flex={1}>{h.diagnosis || "Sin diagnóstico"}</Typography>
                         <Typography sx={{ minWidth: 160 }}>
                             {h.veterinarianName || "Veterinario no especificado"}
                         </Typography>
@@ -262,7 +282,40 @@ const PetDetail = () => {
                 )}
             />
 
-            {/* TURNOS */}
+            {/* === VACUNAS APLICADAS === */}
+            <SectionList
+                icon={<VaccinesIcon color="primary" />}
+                title="Vacunas aplicadas"
+                items={appliedVaccines}
+                loading={loadingVaccines}
+                emptyText="No hay vacunas registradas para esta mascota."
+                createLabel="Nueva vacuna aplicada"
+                onCreate={() => navigate(`/applied-vaccines/create?petId=${pet.id}`)}
+                renderItem={(v) => (
+                    <>
+                        <Typography sx={{ minWidth: 140 }}>
+                            {dayjs(v.date).format("DD/MM/YYYY")}
+                        </Typography>
+                        <Typography sx={{ minWidth: 200, fontWeight: 600 }}>
+                            {v.productName || "Vacuna desconocida"}
+                        </Typography>
+                        <Typography sx={{ minWidth: 160 }}>
+                            {v.veterinarianName || "Veterinario no especificado"}
+                        </Typography>
+                        <Typography flex={1}>{v.observations || "Sin observaciones"}</Typography>
+                        <Button
+                            size="small"
+                            color="primary"
+                            onClick={() => navigate(`/applied-vaccines/${v.id}`)}
+                            sx={petDetailStyles.smallButton}
+                        >
+                            Ver
+                        </Button>
+                    </>
+                )}
+            />
+
+            {/* === TURNOS === */}
             <SectionList
                 icon={<CalendarMonthIcon color="primary" />}
                 title="Turnos recientes"
