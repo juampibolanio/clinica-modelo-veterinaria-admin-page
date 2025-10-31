@@ -3,61 +3,82 @@ import { useSnackbar } from "notistack";
 import { getAllUsers, deleteUser } from "../api/users.api";
 
 /**
- * Custom hook that handles fetching, searching and deleting users
+ * Maneja listado, filtros y eliminación de usuarios
  */
 export const useUsersData = () => {
   const { enqueueSnackbar } = useSnackbar();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [keyword, setKeyword] = useState("");
+
+  // Filtros
+  const [filters, setFilters] = useState({
+    name: "",
+    email: "",
+    role: "",
+  });
+
+  // Estado del diálogo de confirmación
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
   const debounceRef = useRef(null);
 
-  // Fetch all users
+  // Cargar usuarios
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
+      const keyword = [filters.name, filters.email, filters.role]
+        .filter(Boolean)
+        .join(" ");
+
       const data = await getAllUsers(keyword);
-      setRows(data || []);
-    } catch {
+      const list = Array.isArray(data) ? data : data?.content || [];
+      setRows(list);
+    } catch (err) {
       enqueueSnackbar("Error al cargar usuarios", { variant: "error" });
     } finally {
       setLoading(false);
     }
-  }, [enqueueSnackbar, keyword]);
+  }, [enqueueSnackbar, filters]);
 
-  // Handle search with debounce
+  // Debounce para filtros
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(fetchUsers, 400);
     return () => clearTimeout(debounceRef.current);
-  }, [keyword, fetchUsers]);
+  }, [filters, fetchUsers]);
 
+  // Carga inicial
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Delete user
-  const handleDeleteUser = useCallback(
-    async (id) => {
-      try {
-        await deleteUser(id);
-        enqueueSnackbar("Usuario eliminado correctamente", {
-          variant: "success",
-        });
-        fetchUsers();
-      } catch {
-        enqueueSnackbar("Error al eliminar usuario", { variant: "error" });
-      }
-    },
-    [enqueueSnackbar, fetchUsers]
-  );
+  // Eliminar usuario
+  const handleConfirmDelete = useCallback(async () => {
+    if (!selectedUser?.id) return;
+    try {
+      await deleteUser(selectedUser.id);
+      enqueueSnackbar("Usuario eliminado correctamente", {
+        variant: "success",
+      });
+      fetchUsers();
+    } catch {
+      enqueueSnackbar("Error al eliminar usuario", { variant: "error" });
+    } finally {
+      setConfirmOpen(false);
+    }
+  }, [enqueueSnackbar, fetchUsers, selectedUser]);
 
   return {
     rows,
     loading,
-    keyword,
-    setKeyword,
+    filters,
+    setFilters,
+    confirmOpen,
+    setConfirmOpen,
+    selectedUser,
+    setSelectedUser,
+    handleConfirmDelete,
     fetchUsers,
-    handleDeleteUser,
   };
 };
