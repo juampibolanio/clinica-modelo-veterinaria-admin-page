@@ -5,19 +5,14 @@ import {
     DialogContent,
     DialogTitle,
     Typography,
+    Stack,
 } from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { confirmDialogStyles } from "./styles/confirmDialog.styles";
 
 /**
  * Reusable confirmation dialog with professional styling.
- * @param {boolean} open - Controls the visibility of the dialog.
- * @param {string} title - The title of the dialog.
- * @param {string} message - The message/content to display.
- * @param {function} onClose - Callback when dialog is closed or cancelled.
- * @param {function} onConfirm - Callback when user confirms the action.
- * @param {string} confirmText - Text for the confirm button.
- * @param {string} cancelText - Text for the cancel button.
- * @param {string} confirmColor - Color variant for confirm button ('error' | 'primary').
+ * Compatible with MUI SSR (no nested heading errors).
  */
 const ConfirmDialog = ({
     open,
@@ -37,8 +32,14 @@ const ConfirmDialog = ({
             fullWidth
             sx={confirmDialogStyles.dialog}
         >
-            <DialogTitle sx={confirmDialogStyles.dialogTitle}>
-                {title}
+            {/* Cambiamos a component="div" para evitar h2→h6 nesting */}
+            <DialogTitle component="div" sx={confirmDialogStyles.dialogTitle}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <WarningAmberIcon color="warning" />
+                    <Typography variant="h6" fontWeight={800}>
+                        {title}
+                    </Typography>
+                </Stack>
             </DialogTitle>
 
             <DialogContent sx={confirmDialogStyles.dialogContent}>
@@ -52,10 +53,7 @@ const ConfirmDialog = ({
             </DialogContent>
 
             <DialogActions sx={confirmDialogStyles.dialogActions}>
-                <Button
-                    onClick={onClose}
-                    sx={confirmDialogStyles.cancelButton}
-                >
+                <Button onClick={onClose} sx={confirmDialogStyles.cancelButton}>
                     {cancelText}
                 </Button>
                 <Button

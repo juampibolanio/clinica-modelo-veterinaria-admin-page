@@ -185,26 +185,26 @@ const Reports = () => {
                     <CircularProgress size={32} />
                 </Box>
             ) : (
-                <Grid container spacing={3}>
+                <Grid container spacing={3} alignItems="stretch">
                     {/* === KPI CARDS === */}
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} sm={6} md={3}>
                         <StatCard title="Promedio edad mascotas" value={`${averagePetAge} años`} />
                     </Grid>
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} sm={6} md={3}>
                         <StatCard
                             title="Vacunas aplicadas"
                             value={totalVaccinesYear}
                             subtitle={`Año ${year}`}
                         />
                     </Grid>
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} sm={6} md={3}>
                         <StatCard title="Especies registradas" value={petsBySpecies.length} />
                     </Grid>
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} sm={6} md={3}>
                         <StatCard title="Géneros registrados" value={petsByGender.length} />
                     </Grid>
 
-                    {/* === CHARTS === */}
+                    {/* === CHARTS GRID === */}
                     {[
                         {
                             title: `Vacunas aplicadas por mes (${year})`,
@@ -229,8 +229,7 @@ const Reports = () => {
                             ),
                         },
                         {
-                            title: `Turnos por ${periodType === "month" ? "mes" : "semana"
-                                } (${year})`,
+                            title: `Turnos por ${periodType === "month" ? "mes" : "semana"} (${year})`,
                             component: (
                                 <BarChart data={appointmentsByPeriod}>
                                     <XAxis dataKey="period" />
@@ -244,13 +243,7 @@ const Reports = () => {
                             title: "Mascotas atendidas por especie",
                             component: (
                                 <PieChart>
-                                    <Pie
-                                        data={petsBySpecies}
-                                        dataKey="count"
-                                        nameKey="species"
-                                        label
-                                        outerRadius={100}
-                                    >
+                                    <Pie data={petsBySpecies} dataKey="count" nameKey="species" label outerRadius={100}>
                                         {petsBySpecies.map((_, i) => (
                                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                         ))}
@@ -264,13 +257,7 @@ const Reports = () => {
                             title: "Mascotas por género",
                             component: (
                                 <PieChart>
-                                    <Pie
-                                        data={petsByGender}
-                                        dataKey="count"
-                                        nameKey="gender"
-                                        label
-                                        outerRadius={100}
-                                    >
+                                    <Pie data={petsByGender} dataKey="count" nameKey="gender" label outerRadius={70}>
                                         {petsByGender.map((_, i) => (
                                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                         ))}
@@ -295,13 +282,7 @@ const Reports = () => {
                             title: `Diagnósticos más frecuentes (Top ${topN})`,
                             component: (
                                 <PieChart>
-                                    <Pie
-                                        data={topDiagnoses}
-                                        dataKey="count"
-                                        nameKey="diagnosis"
-                                        label
-                                        outerRadius={100}
-                                    >
+                                    <Pie data={topDiagnoses} dataKey="count" nameKey="diagnosis" label outerRadius={100}>
                                         {topDiagnoses.map((_, i) => (
                                             <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                         ))}
@@ -313,9 +294,9 @@ const Reports = () => {
                         },
                     ].map((chart, i) => (
                         <Grid key={i} item xs={12} md={6}>
-                            <Paper elevation={2} sx={reportsStyles.chartCard}>
+                            <Paper elevation={3} sx={reportsStyles.chartCard}>
                                 <Typography sx={reportsStyles.chartTitle}>{chart.title}</Typography>
-                                <ResponsiveContainer width="100%" height={300}>
+                                <ResponsiveContainer width="100%" height={320}>
                                     {chart.component}
                                 </ResponsiveContainer>
                             </Paper>
@@ -323,12 +304,12 @@ const Reports = () => {
                     ))}
 
                     {/* === Diagnósticos por especie === */}
-                    <Grid item xs={12}>
-                        <Paper elevation={2} sx={reportsStyles.chartCard}>
+                    <Grid item xs={12} md={8}>
+                        <Paper elevation={3} sx={reportsStyles.chartCard}>
                             <Typography sx={reportsStyles.chartTitle}>
                                 Diagnósticos más frecuentes por especie (Top {topN})
                             </Typography>
-                            <ResponsiveContainer width="100%" height={350}>
+                            <ResponsiveContainer width="100%" height={400}>
                                 <BarChart
                                     data={Object.values(
                                         diagnosesBySpecies.reduce((acc, curr) => {
@@ -343,7 +324,7 @@ const Reports = () => {
                                         }, {})
                                     )}
                                 >
-                                    <XAxis dataKey="diagnosis" angle={-30} textAnchor="end" interval={0} />
+                                    <XAxis dataKey="diagnosis" angle={-25} textAnchor="end" interval={0} />
                                     <YAxis allowDecimals={false} />
                                     <Tooltip />
                                     <Legend />
@@ -370,14 +351,14 @@ const Reports = () => {
                     </Grid>
 
                     {/* === Dueños con más mascotas === */}
-                    <Grid item xs={12}>
-                        <Paper elevation={2} sx={reportsStyles.chartCard}>
+                    <Grid item xs={12} md={4}>
+                        <Paper elevation={3} sx={reportsStyles.chartCard}>
                             <Typography sx={reportsStyles.chartTitle}>
                                 Dueños con más mascotas (Top {topN})
                             </Typography>
-                            <ResponsiveContainer width="100%" height={300}>
+                            <ResponsiveContainer width="100%" height={400}>
                                 <BarChart data={petsPerOwner}>
-                                    <XAxis dataKey="ownerName" />
+                                    <XAxis dataKey="ownerName" interval={0} angle={-15} textAnchor="end" />
                                     <YAxis allowDecimals={false} />
                                     <Tooltip />
                                     <Bar dataKey="count" fill={COLORS[4]} />

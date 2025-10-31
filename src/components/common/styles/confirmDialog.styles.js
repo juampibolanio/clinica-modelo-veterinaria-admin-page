@@ -17,8 +17,6 @@ export const confirmDialogStyles = {
     fontWeight: 700,
     fontSize: "1.25rem",
     color: "text.primary",
-    borderBottom: "1px solid",
-    borderColor: "rgba(55, 129, 227, 0.12)",
     background:
       "linear-gradient(180deg, rgba(55, 129, 227, 0.03) 0%, transparent 100%)",
   },
@@ -40,8 +38,6 @@ export const confirmDialogStyles = {
     pb: 3,
     pt: 2,
     gap: 1.5,
-    borderTop: "1px solid",
-    borderColor: "rgba(55, 129, 227, 0.08)",
   },
 
   cancelButton: {
@@ -78,7 +74,6 @@ export const confirmDialogStyles = {
     },
   },
 
-  // Variant for success/primary confirm
   confirmButtonPrimary: {
     borderRadius: 2,
     px: 3,

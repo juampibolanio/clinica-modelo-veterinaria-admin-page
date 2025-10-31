@@ -54,6 +54,10 @@ export const reportsStyles = {
     textAlign: "center",
     bgcolor: "#FFFFFF",
     boxShadow: "0 3px 12px rgba(55,129,227,0.1)",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
     transition: "all 0.2s ease",
     "&:hover": {
       transform: "translateY(-3px)",
@@ -66,6 +70,10 @@ export const reportsStyles = {
     borderRadius: 2,
     bgcolor: "#FFFFFF",
     boxShadow: "0 2px 10px rgba(55,129,227,0.08)",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
     transition: "all 0.3s ease",
     "&:hover": {
       transform: "translateY(-4px)",
@@ -77,5 +85,6 @@ export const reportsStyles = {
     fontWeight: 700,
     mb: 2,
     color: "#212121",
+    textAlign: "center",
   },
 };

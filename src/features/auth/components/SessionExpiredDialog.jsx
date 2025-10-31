@@ -6,6 +6,7 @@ import {
     Button,
     Typography,
     Slide,
+    Stack,
 } from "@mui/material";
 import { forwardRef } from "react";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -16,10 +17,7 @@ const Transition = forwardRef(function Transition(props, ref) {
 });
 
 /**
- * This component displays a dialog informing the user that their session has expired.
- * @param {boolean} open - Whether the dialog is open.
- * @param {function} onConfirm - Function to call when the user confirms (e.g., clicks the button).
- * @return {JSX.Element} The SessionExpiredDialog component.
+ * Dialog displayed when the user's session has expired.
  */
 const SessionExpiredDialog = ({ open, onConfirm }) => {
     return (
@@ -37,11 +35,14 @@ const SessionExpiredDialog = ({ open, onConfirm }) => {
                 },
             }}
         >
-            <DialogTitle>
-                <WarningAmberIcon sx={{ fontSize: 48, color: "#ECA52E", mb: 1 }} />
-                <Typography variant="h6" fontWeight={800}>
-                    Sesión expirada
-                </Typography>
+            {/* Cambiamos el componente raíz para evitar h2→h6 nesting */}
+            <DialogTitle component="div" sx={{ pt: 3 }}>
+                <Stack alignItems="center" spacing={1}>
+                    <WarningAmberIcon sx={{ fontSize: 48, color: "#ECA52E" }} />
+                    <Typography variant="h6" fontWeight={800}>
+                        Sesión expirada
+                    </Typography>
+                </Stack>
             </DialogTitle>
 
             <DialogContent>
