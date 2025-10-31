@@ -1,20 +1,24 @@
 import { useState, useMemo } from "react";
 import {
+    Box,
     Stack,
     TextField,
     Button,
     CircularProgress,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { categoryFormStyles } from "../styles/categoryForm.styles";
 
 /**
  * CategoryForm
- * Handles creation and edition of product categories.
+ * Handles creation and edition of product categories with unified styling.
  */
 const CategoryForm = ({
     initialValues = { name: "", description: "" },
     onSubmit,
     loading = false,
 }) => {
+    const navigate = useNavigate();
     const [form, setForm] = useState(initialValues);
 
     // ==============================
@@ -36,11 +40,16 @@ const CategoryForm = ({
     // UI render
     // ==============================
     return (
-        <form onSubmit={handleSubmit} noValidate>
+        <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={categoryFormStyles.form}
+        >
             <Stack spacing={2}>
-                {/* Category name */}
+                {/* Nombre */}
                 <TextField
-                    label="Nombre"
+                    label="Nombre de la categoría"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
@@ -51,43 +60,48 @@ const CategoryForm = ({
                             ? "El nombre de la categoría es obligatorio"
                             : " "
                     }
+                    sx={categoryFormStyles.textField}
                 />
 
-                {/* Category description */}
+                {/* Descripción */}
                 <TextField
                     label="Descripción"
                     name="description"
                     value={form.description}
                     onChange={handleChange}
                     multiline
-                    minRows={3}
+                    rows={3}
                     fullWidth
+                    sx={categoryFormStyles.textField}
                 />
 
-                {/* Buttons */}
-                <Stack direction="row" justifyContent="flex-end" spacing={2} mt={2}>
+                {/* Botones */}
+                <Stack sx={categoryFormStyles.actionsContainer}>
                     <Button
                         variant="outlined"
                         color="secondary"
-                        onClick={() => window.history.back()}
+                        onClick={() => navigate(-1)}
                         disabled={loading}
+                        sx={categoryFormStyles.cancelButton}
                     >
                         Cancelar
                     </Button>
+
                     <Button
                         variant="contained"
                         type="submit"
                         disabled={!canSubmit || loading}
+                        sx={categoryFormStyles.submitButton}
                     >
                         {loading ? (
-                            <CircularProgress size={22} color="inherit" />
+                            <CircularProgress size={22} sx={{ color: "white" }} />
                         ) : (
-                            "Guardar"
+                            "Guardar categoría"
                         )}
                     </Button>
                 </Stack>
             </Stack>
-        </form>
+        </Box>
     );
 };
 
