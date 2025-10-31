@@ -1,43 +1,51 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
     Box,
     Stack,
     Typography,
-    Button,
     TextField,
-    Paper,
-    Pagination,
+    IconButton,
+    Tooltip,
+    Button,
     Divider,
-    CircularProgress,
+    Card,
+    useTheme,
+    useMediaQuery,
 } from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import { esES } from "@mui/x-data-grid/locales";
+import SearchIcon from "@mui/icons-material/Search";
+import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/DeleteOutline";
+import AddIcon from "@mui/icons-material/VaccinesRounded";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
+import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import {
     listAppliedVaccines,
     deleteAppliedVaccine,
 } from "../api/applied-vaccines.api";
-import ConfirmDialog from "../../../components/common/ConfirmDialog";
+import { appliedVaccineListStyles } from "../styles/appliedVaccineList.styles";
 
 /**
- * AppliedVaccineList
- * Displays all applied vaccines with filtering and pagination.
+ * AppliedVaccineList — styled + responsive version
  */
 const AppliedVaccineList = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { enqueueSnackbar } = useSnackbar();
+    const theme = useTheme();
+    const isSmall = useMediaQuery(theme.breakpoints.down("sm"));
 
-    // ==============================
-    // State
-    // ==============================
     const params = new URLSearchParams(location.search);
     const petIdFromQuery = params.get("petId");
 
+    const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [pageData, setPageData] = useState(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
-    const [selectedId, setSelectedId] = useState(null);
+    const [selectedItem, setSelectedItem] = useState(null);
 
     const [filters, setFilters] = useState({
         petId: petIdFromQuery || "",
@@ -45,22 +53,16 @@ const AppliedVaccineList = () => {
         productId: "",
         fromDate: "",
         toDate: "",
-        page: 0,
-        size: 10,
-        sortBy: "date",
-        direction: "desc",
     });
 
-    // ==============================
-    // Fetch data
-    // ==============================
+    const debounceRef = useRef(null);
+
     const fetchData = async () => {
         try {
             setLoading(true);
-            const data = await listAppliedVaccines(filters);
-            setPageData(data);
-        } catch (err) {
-            console.error("Error loading applied vaccines:", err);
+            const data = await listAppliedVaccines({ ...filters, page: 0, size: 100 });
+            setRows(Array.isArray(data?.content) ? data.content : []);
+        } catch {
             enqueueSnackbar("Error al cargar vacunas aplicadas", { variant: "error" });
         } finally {
             setLoading(false);
@@ -68,203 +70,276 @@ const AppliedVaccineList = () => {
     };
 
     useEffect(() => {
-        fetchData();
-        // eslint-disable-next-line
-    }, [filters.page, filters.size, filters.sortBy, filters.direction]);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(fetchData, 400);
+        return () => clearTimeout(debounceRef.current);
+    }, [filters]);
 
-    // ==============================
-    // Handlers
-    // ==============================
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilters((f) => ({ ...f, [name]: value, page: 0 }));
-    };
-
-    const handleSearch = () => fetchData();
-
-    const handleAskDelete = (id) => {
-        setSelectedId(id);
+    const handleAskDelete = (row) => {
+        setSelectedItem(row);
         setConfirmOpen(true);
     };
 
     const handleConfirmDelete = async () => {
         try {
-            await deleteAppliedVaccine(selectedId);
+            await deleteAppliedVaccine(selectedItem.id);
             enqueueSnackbar("Vacuna eliminada correctamente ✅", { variant: "success" });
             fetchData();
-        } catch (err) {
-            console.error("Error deleting applied vaccine:", err);
-            enqueueSnackbar("Error al eliminar la vacuna", { variant: "error" });
+        } catch {
+            enqueueSnackbar("Error al eliminar la vacuna aplicada", { variant: "error" });
         } finally {
             setConfirmOpen(false);
         }
     };
 
-    // ==============================
-    // Render
-    // ==============================
+    const columns = useMemo(
+        () => [
+            {
+                field: "date",
+                headerName: "Fecha",
+                flex: 1,
+                renderCell: (params) =>
+                    params.row.date ? dayjs(params.row.date).format("DD/MM/YYYY") : "—",
+            },
+            { field: "petName", headerName: "Mascota", flex: 1.2 },
+            { field: "productName", headerName: "Producto (vacuna)", flex: 1.4 },
+            { field: "veterinarianName", headerName: "Veterinario", flex: 1.3 },
+            { field: "observations", headerName: "Observaciones", flex: 1.8 },
+            {
+                field: "actions",
+                headerName: "Acciones",
+                sortable: false,
+                width: 180,
+                align: "center",
+                headerAlign: "center",
+                renderCell: (params) => (
+                    <Stack direction="row" spacing={1} justifyContent="center">
+                        <Tooltip title="Ver detalle" arrow>
+                            <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => navigate(`/applied-vaccines/${params.row.id}`)}
+                            >
+                                <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Editar" arrow>
+                            <IconButton
+                                size="small"
+                                color="secondary"
+                                onClick={() =>
+                                    navigate(`/applied-vaccines/${params.row.id}/edit`)
+                                }
+                            >
+                                <EditIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar" arrow>
+                            <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleAskDelete(params.row)}
+                            >
+                                <DeleteIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Stack>
+                ),
+            },
+        ],
+        [navigate]
+    );
+
     return (
-        <Stack spacing={2}>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap">
-                <Typography variant="h4" fontWeight={800}>
-                    Vacunas aplicadas
-                </Typography>
+        <>
+            <Stack spacing={3}>
+                {/* === Header === */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    justifyContent="space-between"
+                    alignItems={{ xs: "flex-start", sm: "center" }}
+                    sx={appliedVaccineListStyles.header}
+                >
+                    <Typography variant="h4" sx={appliedVaccineListStyles.title}>
+                        Vacunas aplicadas
+                    </Typography>
 
-            </Stack>
+                </Stack>
 
-            {/* Filters */}
-            <Paper sx={{ p: 2, borderRadius: 2 }}>
-                <Stack direction="row" gap={2} flexWrap="wrap" alignItems="center">
+                {/* === Filters === */}
+                <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={2}
+                    justifyContent="center"
+                    alignItems="center"
+                    sx={appliedVaccineListStyles.filtersContainer}
+                >
                     <TextField
                         label="ID Mascota"
-                        name="petId"
-                        value={filters.petId}
-                        onChange={handleFilterChange}
-                        disabled={!!petIdFromQuery}
                         size="small"
+                        value={filters.petId}
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, petId: e.target.value }))
+                        }
+                        disabled={!!petIdFromQuery}
+                        sx={appliedVaccineListStyles.filterField}
                     />
+
                     <TextField
                         label="ID Veterinario"
-                        name="veterinarianId"
-                        value={filters.veterinarianId}
-                        onChange={handleFilterChange}
                         size="small"
+                        value={filters.veterinarianId}
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, veterinarianId: e.target.value }))
+                        }
+                        sx={appliedVaccineListStyles.filterField}
                     />
+
                     <TextField
                         label="ID Producto"
-                        name="productId"
+                        size="small"
                         value={filters.productId}
-                        onChange={handleFilterChange}
-                        size="small"
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, productId: e.target.value }))
+                        }
+                        sx={appliedVaccineListStyles.filterField}
                     />
+
                     <TextField
                         type="date"
+                        size="small"
                         label="Desde"
-                        name="fromDate"
-                        value={filters.fromDate}
-                        onChange={handleFilterChange}
                         InputLabelProps={{ shrink: true }}
-                        size="small"
+                        value={filters.fromDate}
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, fromDate: e.target.value }))
+                        }
+                        sx={appliedVaccineListStyles.filterField}
                     />
+
                     <TextField
                         type="date"
-                        label="Hasta"
-                        name="toDate"
-                        value={filters.toDate}
-                        onChange={handleFilterChange}
-                        InputLabelProps={{ shrink: true }}
                         size="small"
+                        label="Hasta"
+                        InputLabelProps={{ shrink: true }}
+                        value={filters.toDate}
+                        onChange={(e) =>
+                            setFilters((f) => ({ ...f, toDate: e.target.value }))
+                        }
+                        sx={appliedVaccineListStyles.filterField}
                     />
-                    <Button variant="outlined" onClick={handleSearch}>
-                        Aplicar
-                    </Button>
+
+                    <Tooltip title="Buscar" arrow>
+                        <IconButton
+                            color="primary"
+                            onClick={fetchData}
+                            sx={appliedVaccineListStyles.searchButton}
+                        >
+                            <SearchIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
-            </Paper>
 
-            {/* Table */}
-            <Paper sx={{ borderRadius: 2, overflow: "hidden" }}>
-                <Box sx={{ p: 2 }}>
-                    {/* Table header */}
-                    <Stack direction="row" sx={{ fontWeight: 700 }}>
-                        <Box flex={1}>Fecha</Box>
-                        <Box flex={1}>Mascota</Box>
-                        <Box flex={1.5}>Producto (vacuna)</Box>
-                        <Box flex={1.5}>Veterinario</Box>
-                        <Box flex={2}>Observaciones</Box>
-                        <Box width={180} textAlign="right">
-                            Acciones
-                        </Box>
+                <Divider sx={appliedVaccineListStyles.divider} />
+
+                {/* === Responsive Section === */}
+                {isSmall ? (
+                    <Stack spacing={2}>
+                        {rows.length > 0 ? (
+                            rows.map((r) => (
+                                <Card key={r.id} sx={appliedVaccineListStyles.mobileCard}>
+                                    <Typography sx={appliedVaccineListStyles.mobileTitle}>
+                                        {r.productName} — {r.petName}
+                                    </Typography>
+                                    <Typography sx={appliedVaccineListStyles.mobileSubtitle}>
+                                        {r.date ? dayjs(r.date).format("DD/MM/YYYY") : "Sin fecha"}
+                                    </Typography>
+                                    <Typography sx={appliedVaccineListStyles.mobileMetadata}>
+                                        Veterinario: {r.veterinarianName || "—"}
+                                    </Typography>
+                                    <Typography sx={appliedVaccineListStyles.mobileMetadata}>
+                                        Observaciones: {r.observations || "—"}
+                                    </Typography>
+                                    <Stack direction="row" spacing={1} mt={1}>
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => navigate(`/applied-vaccines/${r.id}`)}
+                                            sx={appliedVaccineListStyles.actionButton}
+                                        >
+                                            <VisibilityIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="secondary"
+                                            onClick={() =>
+                                                navigate(`/applied-vaccines/${r.id}/edit`)
+                                            }
+                                            sx={appliedVaccineListStyles.actionButton}
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleAskDelete(r)}
+                                            sx={appliedVaccineListStyles.actionButton}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Stack>
+                                </Card>
+                            ))
+                        ) : (
+                            <Typography sx={appliedVaccineListStyles.emptyMessage}>
+                                No hay registros
+                            </Typography>
+                        )}
                     </Stack>
-                </Box>
-                <Divider />
-
-                {/* Table body */}
-                {loading && (
-                    <Box p={3} textAlign="center">
-                        <CircularProgress size={28} />
-                    </Box>
-                )}
-
-                {!loading && pageData?.content?.length === 0 && (
-                    <Box p={2} textAlign="center" color="text.secondary">
-                        No hay resultados disponibles.
-                    </Box>
-                )}
-
-                {!loading &&
-                    pageData?.content?.map((row) => (
-                        <Box key={row.id}>
-                            <Box
-                                sx={{
-                                    p: 2,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    "&:hover": { backgroundColor: "action.hover" },
-                                }}
-                            >
-                                <Box flex={1}>
-                                    {row.date ? dayjs(row.date).format("DD/MM/YYYY") : "-"}
-                                </Box>
-                                <Box flex={1}>{row.petName || "—"}</Box>
-                                <Box flex={1.5}>{row.productName || "—"}</Box>
-                                <Box flex={1.5}>{row.veterinarianName || "—"}</Box>
-                                <Box flex={2}>{row.observations || "—"}</Box>
-                                <Box width={180} textAlign="right">
-                                    <Button
-                                        size="small"
-                                        onClick={() =>
-                                            navigate(`/applied-vaccines/${row.id}`)
-                                        }
-                                    >
-                                        Ver
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        onClick={() =>
-                                            navigate(`/applied-vaccines/${row.id}/edit`)
-                                        }
-                                    >
-                                        Editar
-                                    </Button>
-                                    <Button
-                                        size="small"
-                                        color="error"
-                                        onClick={() => handleAskDelete(row.id)}
-                                    >
-                                        Eliminar
-                                    </Button>
-                                </Box>
-                            </Box>
-                            <Divider />
-                        </Box>
-                    ))}
-
-                {/* Pagination */}
-                {pageData && pageData.totalPages > 1 && (
-                    <Stack alignItems="center" p={2}>
-                        <Pagination
-                            page={pageData.number + 1}
-                            count={pageData.totalPages || 1}
-                            onChange={(_, p) =>
-                                setFilters((f) => ({ ...f, page: p - 1 }))
-                            }
+                ) : (
+                    <Box sx={appliedVaccineListStyles.dataGridContainer}>
+                        <DataGrid
+                            rows={rows}
+                            columns={columns}
+                            loading={loading}
+                            disableRowSelectionOnClick
+                            disableColumnMenu
+                            density="comfortable"
+                            getRowId={(r) => r.id}
+                            autoHeight
+                            pageSizeOptions={[10, 25, 50, 100]}
+                            initialState={{
+                                pagination: { paginationModel: { pageSize: 25 } },
+                            }}
+                            localeText={{
+                                ...esES.components.MuiDataGrid.defaultProps.localeText,
+                                noRowsLabel: "No hay registros",
+                                MuiTablePagination: {
+                                    labelRowsPerPage: "Filas por página:",
+                                    labelDisplayedRows: ({ from, to, count }) =>
+                                        `${from}–${to} de ${count !== -1 ? count : `más de ${to}`
+                                        }`,
+                                },
+                            }}
+                            sx={appliedVaccineListStyles.dataGrid}
                         />
-                    </Stack>
+                    </Box>
                 )}
-            </Paper>
+            </Stack>
 
-            {/* Confirm delete dialog */}
+            {/* Confirm Dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar vacuna aplicada"
-                message="¿Estás seguro de eliminar esta vacuna aplicada? Esta acción no se puede deshacer."
-                confirmText="Eliminar"
-                cancelText="Cancelar"
+                message={
+                    selectedItem
+                        ? `¿Seguro que deseas eliminar la vacuna aplicada a ${selectedItem.petName || "la mascota seleccionada"}?`
+                        : "¿Confirmar eliminación?"
+                }
                 onClose={() => setConfirmOpen(false)}
                 onConfirm={handleConfirmDelete}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                confirmColor="error"
             />
-        </Stack>
+        </>
     );
 };
 
