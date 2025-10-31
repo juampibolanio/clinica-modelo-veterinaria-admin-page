@@ -10,36 +10,29 @@ import {
     Chip,
     Grid,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { getAppointmentById, deleteAppointment } from "../api/appointments.api";
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import dayjs from "dayjs";
 import { formatStatus, STATUS_COLOR } from "../utils/utils";
+import { appointmentDetailStyles } from "../styles/appointmentDetail.styles";
 
-/**
- * AppointmentDetail Page
- * Displays complete appointment info with actions to edit or delete.
- */
 const AppointmentDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { enqueueSnackbar } = useSnackbar();
-
     const [appointment, setAppointment] = useState(null);
     const [loading, setLoading] = useState(true);
     const [confirmOpen, setConfirmOpen] = useState(false);
 
-    /**
-     * Fetch appointment detail from backend
-     */
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const data = await getAppointmentById(id);
                 setAppointment(data);
-            } catch (err) {
-                console.error("Error al cargar turno:", err);
+            } catch {
                 enqueueSnackbar("Error al cargar el turno", { variant: "error" });
                 navigate("/appointments");
             } finally {
@@ -49,32 +42,24 @@ const AppointmentDetail = () => {
         fetchData();
     }, [id, enqueueSnackbar, navigate]);
 
-    /**
-     * Handle appointment deletion
-     */
     const handleDelete = async () => {
         try {
             await deleteAppointment(id);
             enqueueSnackbar("Turno eliminado correctamente ✅", { variant: "success" });
             navigate("/appointments");
-        } catch (err) {
-            console.error("Error al eliminar turno:", err);
+        } catch {
             enqueueSnackbar("No se pudo eliminar el turno", { variant: "error" });
         } finally {
             setConfirmOpen(false);
         }
     };
 
-    /**
-     * Loading state
-     */
-    if (loading) {
+    if (loading)
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight={240}>
                 <CircularProgress />
             </Box>
         );
-    }
 
     if (!appointment) return null;
 
@@ -93,31 +78,39 @@ const AppointmentDetail = () => {
     } = appointment;
 
     return (
-        <Stack spacing={3}>
+        <Stack spacing={3} sx={appointmentDetailStyles.container}>
             {/* Header */}
-            <Stack
-                direction={{ xs: "column", sm: "row" }}
-                alignItems={{ xs: "flex-start", sm: "center" }}
-                justifyContent="space-between"
-                spacing={2}
-                flexWrap="wrap"
-            >
-                <Typography variant="h4" fontWeight={800}>
-                    Detalle del Turno
+            <Stack sx={appointmentDetailStyles.header}>
+                <Typography sx={appointmentDetailStyles.headerTitle}>
+                    Detalle del turno
                 </Typography>
 
                 <Stack direction="row" spacing={1} flexWrap="wrap">
-                    {/* ✅ Pasa el turno completo al editar */}
+                    {/* 🔙 Botón volver */}
+                    <Button
+                        startIcon={<ArrowBackIcon />}
+                        variant="outlined"
+                        sx={appointmentDetailStyles.backButton}
+                        onClick={() => navigate(-1)}
+                    >
+                        Volver
+                    </Button>
+
+                    {/* ✏️ Editar */}
                     <Button
                         variant="outlined"
-                        onClick={() => navigate(`/appointments/${id}/edit`, { state: { appointment } })}
+                        sx={appointmentDetailStyles.editButton}
+                        onClick={() =>
+                            navigate(`/appointments/${id}/edit`, { state: { appointment } })
+                        }
                     >
                         Editar
                     </Button>
 
+                    {/* ❌ Eliminar */}
                     <Button
-                        color="error"
                         variant="contained"
+                        sx={appointmentDetailStyles.deleteButton}
                         onClick={() => setConfirmOpen(true)}
                     >
                         Eliminar
@@ -125,28 +118,25 @@ const AppointmentDetail = () => {
                 </Stack>
             </Stack>
 
-            {/* Appointment Information */}
-            <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
-                <Typography variant="h6" fontWeight={700} gutterBottom>
+            {/* Appointment Info */}
+            <Paper sx={appointmentDetailStyles.paper}>
+                <Typography sx={appointmentDetailStyles.sectionTitle}>
                     Información general
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
 
                 <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
-                            <strong>Fecha:</strong>{" "}
-                            {date ? dayjs(date).format("DD/MM/YYYY") : "-"}
+                            <strong>Fecha:</strong> {dayjs(date).format("DD/MM/YYYY")}
                         </Typography>
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
                             <strong>Hora:</strong> {time?.slice(0, 5) || "-"}
                         </Typography>
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} sx={appointmentDetailStyles.gridItem}>
                         <Stack direction="row" alignItems="center" spacing={1}>
                             <Typography>
                                 <strong>Estado:</strong>
@@ -158,8 +148,7 @@ const AppointmentDetail = () => {
                             />
                         </Stack>
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
                             <strong>Veterinario:</strong>{" "}
                             {veterinarianName
@@ -167,27 +156,23 @@ const AppointmentDetail = () => {
                                 : "-"}
                         </Typography>
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
                             <strong>Dueño:</strong>{" "}
                             {ownerName ? `${ownerName} (#${ownerId})` : "-"}
                         </Typography>
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
                             <strong>Mascota:</strong> {petName ? `${petName} (#${petId})` : "-"}
                         </Typography>
                     </Grid>
-
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
                             <strong>Motivo:</strong> {reason || "-"}
                         </Typography>
                     </Grid>
-
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sx={appointmentDetailStyles.gridItem}>
                         <Typography>
                             <strong>Notas:</strong> {notes || "-"}
                         </Typography>
@@ -195,7 +180,6 @@ const AppointmentDetail = () => {
                 </Grid>
             </Paper>
 
-            {/* Delete confirm dialog */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar turno"

@@ -1,19 +1,16 @@
-import { useMemo, useState } from "react";
 import { Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import { useMemo, useState } from "react";
+
 import ConfirmDialog from "../../../components/common/ConfirmDialog";
 import AppointmentFilters from "../components/AppointmentFilters";
 import AppointmentCalendar from "../components/AppointmentCalendar";
 import AppointmentSidebar from "../components/AppointmentSidebar";
 import { useAppointmentsData } from "../hooks/useAppointmentsData";
 import { toISOFromBackend } from "../utils/utils";
+import { appointmentStyles } from "../styles/appointment.styles";
 
-/**
- * Appointments page
- * Renders the appointments page, including a calendar, sidebar,
- * filters, and a confirmation dialog for deletions.
- */
 const Appointments = () => {
     const navigate = useNavigate();
 
@@ -22,7 +19,6 @@ const Appointments = () => {
         setFilters,
         vets,
         appointments,
-        loading,
         fetchAppointments,
         handleDeleteAppointment,
     } = useAppointmentsData();
@@ -30,7 +26,7 @@ const Appointments = () => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
 
-    // Convert backend appointments to FullCalendar event format
+    // Convert appointments to calendar events
     const events = useMemo(
         () =>
             (appointments || []).map((a) => ({
@@ -44,11 +40,10 @@ const Appointments = () => {
         [appointments]
     );
 
-    const todayStr = dayjs().format("YYYY-MM-DD");
-    const tomorrowStr = dayjs().add(1, "day").format("YYYY-MM-DD");
-
-    const todayList = (appointments || []).filter((a) => a.date === todayStr);
-    const tomorrowList = (appointments || []).filter((a) => a.date === tomorrowStr);
+    const today = dayjs().format("YYYY-MM-DD");
+    const tomorrow = dayjs().add(1, "day").format("YYYY-MM-DD");
+    const todayList = (appointments || []).filter((a) => a.date === today);
+    const tomorrowList = (appointments || []).filter((a) => a.date === tomorrow);
 
     const handleDateSelect = (selInfo) => {
         const date = dayjs(selInfo.startStr).format("YYYY-MM-DD");
@@ -57,30 +52,22 @@ const Appointments = () => {
     };
 
     const handleEventClick = (clickInfo) => {
-        const id = clickInfo.event.id;
-        navigate(`/appointments/${id}`);
-    };
-
-    const handleDelete = (id) => {
-        setSelectedId(id);
-        setConfirmOpen(true);
+        navigate(`/appointments/${clickInfo.event.id}`);
     };
 
     const confirmDelete = async () => {
         await handleDeleteAppointment(selectedId);
         setConfirmOpen(false);
     };
-    
-    return (
-        <Stack spacing={2}>
-            {/* Header */}
-            <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-                <Typography variant="h4" fontWeight={800}>
-                    Turnos
-                </Typography>
-            </Stack>
 
-            {/* Filters */}
+    return (
+        <Stack spacing={3}>
+            {/* Encabezado */}
+            <Typography variant="h4" sx={appointmentStyles.headerTitle}>
+                Gestión de turnos
+            </Typography>
+
+            {/* Filtros */}
             <AppointmentFilters
                 filters={filters}
                 setFilters={setFilters}
@@ -88,7 +75,7 @@ const Appointments = () => {
                 onApply={fetchAppointments}
             />
 
-            {/* Main layout */}
+            {/* Layout principal */}
             <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
@@ -106,7 +93,7 @@ const Appointments = () => {
                 />
             </Stack>
 
-            {/* Confirm delete dialog */}
+            {/* Confirmación eliminación */}
             <ConfirmDialog
                 open={confirmOpen}
                 title="Eliminar turno"

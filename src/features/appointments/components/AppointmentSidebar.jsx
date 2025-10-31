@@ -1,32 +1,44 @@
 import { Paper, Stack, Typography, Divider, Chip, Button } from "@mui/material";
 import dayjs from "dayjs";
+import "dayjs/locale/es";
 import { STATUS_COLOR, formatStatus } from "../utils/utils";
+import { appointmentStyles } from "../styles/appointment.styles";
 
-/**
- * Sidebar showing today's and tomorrow's appointments
- * Props:
- * - todayList: Array of appointments for today
- * - tomorrowList: Array of appointments for tomorrow
- * - onView: Function to call when "View" button is clicked (receives appointment ID)
- * 
- */
+dayjs.locale("es");
+
 const AppointmentSidebar = ({ todayList, tomorrowList, onView }) => {
     const renderList = (title, list) => (
-        <Paper sx={{ p: 2, borderRadius: 2 }}>
-            <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Paper sx={appointmentStyles.paperCard}>
+            <Typography
+                variant="h6"
+                fontWeight={700}
+                sx={{
+                    mb: 1,
+                    background: "linear-gradient(135deg, #3781E3 0%, #7027A0 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                }}
+            >
                 {title}
             </Typography>
-            <Divider sx={{ mb: 1 }} />
+
+            <Divider sx={{ mb: 2, borderColor: "rgba(55,129,227,0.15)" }} />
+
             {list.length === 0 ? (
-                <Typography color="text.secondary">Sin turnos {title.toLowerCase()}.</Typography>
+                <Typography color="text.secondary" fontStyle="italic">
+                    Sin turnos {title.toLowerCase()}.
+                </Typography>
             ) : (
                 list.map((t) => (
                     <Stack
                         key={t.id}
                         direction="row"
                         alignItems="center"
-                        spacing={1}
-                        sx={{ py: 0.5, flexWrap: "wrap" }}
+                        spacing={1.2}
+                        sx={{
+                            py: 0.6,
+                            flexWrap: "wrap",
+                        }}
                     >
                         <Chip
                             size="small"
@@ -40,7 +52,11 @@ const AppointmentSidebar = ({ todayList, tomorrowList, onView }) => {
                             color={STATUS_COLOR[t.status] || "default"}
                             label={formatStatus(t.status)}
                         />
-                        <Button size="small" onClick={() => onView(t.id)}>
+                        <Button
+                            size="small"
+                            onClick={() => onView(t.id)}
+                            sx={appointmentStyles.viewButton}
+                        >
                             Ver
                         </Button>
                     </Stack>
@@ -51,8 +67,8 @@ const AppointmentSidebar = ({ todayList, tomorrowList, onView }) => {
 
     return (
         <Stack spacing={2} sx={{ width: { xs: "100%", md: 360 } }}>
-            {renderList("Hoy", todayList)}
-            {renderList("Mañana", tomorrowList)}
+            {renderList("Turnos de hoy", todayList)}
+            {renderList("Turnos de mañana", tomorrowList)}
         </Stack>
     );
 };
