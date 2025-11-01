@@ -32,7 +32,7 @@ import {
     deleteClinicalHistory,
 } from "../api/clinical-history.api";
 import { CONSULTATION_TYPES } from "../constants/consultation-types";
-import { clinicalHistoryListStyles } from "../styles/clinicalHistoryList.styles";
+import { clinicalHistoryListStyles } from "../styles/ClinicalHistoryList.styles";
 
 const ClinicalHistoryList = () => {
     const navigate = useNavigate();
