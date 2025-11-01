@@ -52,11 +52,25 @@ export const categoryListStyles = {
     "& .MuiDataGrid-cell": {
       fontSize: "0.9rem",
       borderBottom: "1px solid rgba(55,129,227,0.08)",
+      display: "flex",
+      alignItems: "center",
     },
     "& .MuiDataGrid-footerContainer": {
       borderTop: "2px solid rgba(55,129,227,0.12)",
       bgcolor: "rgba(55,129,227,0.03)",
     },
+  },
+
+  // ✅ Action button alignment fix
+  actionButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "all 0.2s ease",
+    "& svg": {
+      verticalAlign: "middle",
+    },
+    "&:hover": { transform: "scale(1.15)" },
   },
 
   // Mobile Cards
@@ -84,11 +98,6 @@ export const categoryListStyles = {
     color: "text.secondary",
     fontSize: "0.95rem",
     mt: 0.3,
-  },
-
-  actionButton: {
-    transition: "all 0.2s ease",
-    "&:hover": { transform: "scale(1.15)" },
   },
 
   emptyMessage: {

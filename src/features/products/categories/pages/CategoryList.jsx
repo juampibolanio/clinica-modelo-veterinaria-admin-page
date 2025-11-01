@@ -113,7 +113,13 @@ const CategoryList = () => {
                 align: "center",
                 headerAlign: "center",
                 renderCell: (params) => (
-                    <Stack direction="row" spacing={1} justifyContent="center">
+                    <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{ height: "100%" }}
+                    >
                         <Tooltip title="Editar" arrow>
                             <IconButton
                                 size="small"
@@ -121,6 +127,7 @@ const CategoryList = () => {
                                 onClick={() =>
                                     navigate(`/products/categories/edit/${params.row.id}`)
                                 }
+                                sx={categoryListStyles.actionButton}
                             >
                                 <EditIcon fontSize="small" />
                             </IconButton>
@@ -134,6 +141,7 @@ const CategoryList = () => {
                                     setSelectedCategory(params.row);
                                     setConfirmOpen(true);
                                 }}
+                                sx={categoryListStyles.actionButton}
                             >
                                 <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -239,8 +247,7 @@ const CategoryList = () => {
                                 MuiTablePagination: {
                                     labelRowsPerPage: "Filas por página:",
                                     labelDisplayedRows: ({ from, to, count }) =>
-                                        `${from}–${to} de ${count !== -1 ? count : `más de ${to}`
-                                        }`,
+                                        `${from}–${to} de ${count !== -1 ? count : `más de ${to}`}`,
                                 },
                             }}
                             sx={categoryListStyles.dataGrid}

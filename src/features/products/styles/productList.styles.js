@@ -55,7 +55,7 @@ export const productListStyles = {
     },
   },
 
-  // ✅ DataGrid (Desktop)
+  // DataGrid (Desktop)
   dataGridContainer: {
     width: "100%",
     height: { xs: 450, sm: 600, md: 650 },
@@ -88,6 +88,8 @@ export const productListStyles = {
       borderBottom: "1px solid",
       borderColor: "rgba(55, 129, 227, 0.08)",
       fontSize: "0.95rem",
+      display: "flex",
+      alignItems: "center",
     },
     "& .MuiDataGrid-footerContainer": {
       borderTop: "2px solid",
@@ -96,25 +98,33 @@ export const productListStyles = {
     },
   },
 
-  // Stock cell styles
+  // Stock cell styles (fixed vertical alignment)
   stockCell: (stock) => ({
     fontWeight: stock < 5 ? 700 : 500,
     color:
       stock === 0 ? "error.main" : stock < 5 ? "warning.main" : "text.primary",
     display: "flex",
     alignItems: "center",
-    gap: 0.5,
+    justifyContent: "center",
+    gap: 0.6,
+    height: "100%",
   }),
 
-  // Action buttons in cells
+  // Action buttons in cells (vertically centered)
   actionButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     transition: "all 0.2s ease",
+    "& svg": {
+      verticalAlign: "middle",
+    },
     "&:hover": {
       transform: "scale(1.15)",
     },
   },
 
-  // ✅ Mobile layout styles (Card view)
+  // Mobile layout styles (Card view)
   mobileCard: {
     p: 2.5,
     borderRadius: 2,

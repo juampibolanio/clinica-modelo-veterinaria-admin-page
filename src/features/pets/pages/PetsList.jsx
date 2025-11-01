@@ -254,7 +254,7 @@ const PetsList = () => {
                 title="Eliminar mascota"
                 message={
                     selectedPet
-                        ? `¿Seguro que deseas eliminar a ${selectedPet.name}?`
+                        ? `¿Seguro que deseas eliminar a ${selectedPet.name}? Se eliminarán todos los registros asociados a esta mascota (turnos, vacunas, historias clínicas, etc).`
                         : "¿Confirmar eliminación?"
                 }
                 onClose={() => setConfirmOpen(false)}

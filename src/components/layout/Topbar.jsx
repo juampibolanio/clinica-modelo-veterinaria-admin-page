@@ -44,7 +44,7 @@ const Topbar = ({ onMenuClick }) => {
                 {displayName}
               </Typography>
               <Typography sx={topbarStyles.userRole}>
-                {user?.role === "ADMIN" ? "Administrador" : "Veterinario"}
+                Veterinario
               </Typography>
             </Box>
           </Box>

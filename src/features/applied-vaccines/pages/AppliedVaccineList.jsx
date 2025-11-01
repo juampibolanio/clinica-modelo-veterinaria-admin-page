@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
     Box,
     Stack,
@@ -6,7 +6,6 @@ import {
     TextField,
     IconButton,
     Tooltip,
-    Button,
     Divider,
     Card,
     useTheme,
@@ -18,7 +17,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/VisibilityRounded";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutline";
-import AddIcon from "@mui/icons-material/VaccinesRounded";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSnackbar } from "notistack";
@@ -30,7 +28,8 @@ import {
 import { appliedVaccineListStyles } from "../styles/appliedVaccineList.styles";
 
 /**
- * AppliedVaccineList — styled + responsive version
+ * AppliedVaccineList
+ * Page for listing applied vaccines with filtering, viewing, editing, and deleting capabilities.
  */
 const AppliedVaccineList = () => {
     const navigate = useNavigate();
@@ -92,6 +91,7 @@ const AppliedVaccineList = () => {
         }
     };
 
+    // This memoizes the columns definition to avoid unnecessary re-renders
     const columns = useMemo(
         () => [
             {
@@ -209,7 +209,7 @@ const AppliedVaccineList = () => {
                         type="date"
                         size="small"
                         label="Desde"
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         value={filters.fromDate}
                         onChange={(e) =>
                             setFilters((f) => ({ ...f, fromDate: e.target.value }))
@@ -221,7 +221,7 @@ const AppliedVaccineList = () => {
                         type="date"
                         size="small"
                         label="Hasta"
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         value={filters.toDate}
                         onChange={(e) =>
                             setFilters((f) => ({ ...f, toDate: e.target.value }))

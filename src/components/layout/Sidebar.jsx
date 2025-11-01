@@ -44,7 +44,6 @@ const Sidebar = ({ onClose }) => {
     { label: "Pacientes", icon: <PetsIcon />, path: "/pets" },
     { label: "Turnos", icon: <EventIcon />, path: "/appointments" },
     { label: "Historias Clínicas", icon: <FeedIcon />, path: "/clinical-history" },
-    { label: "Vacunación", icon: <VaccinesIcon />, path: "/applied-vaccines" },
     {
       label: "Productos",
       icon: <InventoryIcon />,

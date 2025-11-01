@@ -163,10 +163,9 @@ const PetForm = ({ onSubmit, submitting = false, defaultValues = {}, mode = "cre
                             render={({ field }) => (
                                 <TextField
                                     {...field}
-                                    label="Fecha de nacimiento"
                                     type="date"
                                     fullWidth
-                                    InputLabelProps={{ shrink: true }}
+                                    slotProps={{ inputLabel: { shrink: true } }}
                                     error={!!errors.birthDate}
                                     helperText={errors.birthDate?.message}
                                     sx={petFormStyles.textField}

@@ -11,6 +11,7 @@ import {
     Card,
     useMediaQuery,
 } from "@mui/material";
+import { esES } from "@mui/x-data-grid/locales";
 import { useTheme } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -63,6 +64,7 @@ const ProductList = () => {
             const products = data?.content || [];
             setRows(products);
             setTotalElements(data?.totalElements || 0);
+
             const lowStock = products.filter((p) => p.stock < 5);
             setLowStockProducts(lowStock);
         } catch (err) {
@@ -111,10 +113,18 @@ const ProductList = () => {
                 renderCell: (params) => {
                     const stock = params.value;
                     return (
-                        <Box sx={productListStyles.stockCell(stock)}>
+                        <Box sx={{ ...productListStyles.stockCell(stock), width: "100%" }}>
                             {stock === 0 && <ErrorOutlineIcon fontSize="small" />}
                             {stock > 0 && stock < 5 && <WarningAmberIcon fontSize="small" />}
-                            <Typography variant="body2" sx={{ fontWeight: stock < 5 ? 700 : 500 }}>
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    fontWeight: stock < 5 ? 700 : 500,
+                                    lineHeight: 1,
+                                    display: "flex",
+                                    alignItems: "center",
+                                }}
+                            >
                                 {stock}
                             </Typography>
                         </Box>
@@ -130,7 +140,13 @@ const ProductList = () => {
                 align: "center",
                 headerAlign: "center",
                 renderCell: (params) => (
-                    <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
+                    <Stack
+                        direction="row"
+                        spacing={0.5}
+                        justifyContent="center"
+                        alignItems="center"
+                        sx={{ height: "100%" }}
+                    >
                         <Tooltip title="Editar" arrow>
                             <IconButton
                                 size="small"
@@ -260,7 +276,8 @@ const ProductList = () => {
                         density="comfortable"
                         getRowId={(r) => r.id}
                         localeText={{
-                            noRowsLabel: "No hay productos registrados",
+                            ...esES.components.MuiDataGrid.defaultProps.localeText,
+                            noRowsLabel: "No hay registros",
                             MuiTablePagination: {
                                 labelRowsPerPage: "Filas por página:",
                                 labelDisplayedRows: ({ from, to, count }) =>

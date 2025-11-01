@@ -28,7 +28,6 @@ import {
     getAppointmentsPerVet,
     getVaccinesPerMonth,
     getTopProducts,
-    getPetsPerOwner,
     getTopDiagnoses,
     getPetsBySpecies,
     getPetsByGender,
@@ -67,7 +66,6 @@ const Reports = () => {
     const [appointmentsPerVet, setAppointmentsPerVet] = useState([]);
     const [vaccinesPerMonth, setVaccinesPerMonth] = useState([]);
     const [topProducts, setTopProducts] = useState([]);
-    const [petsPerOwner, setPetsPerOwner] = useState([]);
     const [topDiagnoses, setTopDiagnoses] = useState([]);
     const [diagnosesBySpecies, setDiagnosesBySpecies] = useState([]);
     const [petsBySpecies, setPetsBySpecies] = useState([]);
@@ -82,7 +80,6 @@ const Reports = () => {
                 apv,
                 vpm,
                 tpr,
-                ppo,
                 tdx,
                 pbs,
                 pbg,
@@ -93,7 +90,6 @@ const Reports = () => {
                 getAppointmentsPerVet(topN),
                 getVaccinesPerMonth(year),
                 getTopProducts(topN),
-                getPetsPerOwner(topN),
                 getTopDiagnoses(topN),
                 getPetsBySpecies(),
                 getPetsByGender(),
@@ -105,7 +101,6 @@ const Reports = () => {
             setAppointmentsPerVet(apv);
             setVaccinesPerMonth(vpm);
             setTopProducts(tpr);
-            setPetsPerOwner(ppo);
             setTopDiagnoses(tdx);
             setPetsBySpecies(pbs);
             setPetsByGender(pbg);
@@ -196,12 +191,6 @@ const Reports = () => {
                             value={totalVaccinesYear}
                             subtitle={`Año ${year}`}
                         />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <StatCard title="Especies registradas" value={petsBySpecies.length} />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <StatCard title="Géneros registrados" value={petsByGender.length} />
                     </Grid>
 
                     {/* === CHARTS GRID === */}
@@ -345,23 +334,6 @@ const Reports = () => {
                                             name={species}
                                         />
                                     ))}
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </Paper>
-                    </Grid>
-
-                    {/* === Dueños con más mascotas === */}
-                    <Grid item xs={12} md={4}>
-                        <Paper elevation={3} sx={reportsStyles.chartCard}>
-                            <Typography sx={reportsStyles.chartTitle}>
-                                Dueños con más mascotas (Top {topN})
-                            </Typography>
-                            <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={petsPerOwner}>
-                                    <XAxis dataKey="ownerName" interval={0} angle={-15} textAnchor="end" />
-                                    <YAxis allowDecimals={false} />
-                                    <Tooltip />
-                                    <Bar dataKey="count" fill={COLORS[4]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </Paper>

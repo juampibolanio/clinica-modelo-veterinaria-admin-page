@@ -7,7 +7,11 @@ import esLocale from "@fullcalendar/core/locales/es";
 import { appointmentStyles } from "../styles/appointment.styles";
 
 /**
- * Vista de calendario (FullCalendar) — completamente responsive y en español
+ * Calendar component to display appointments using FullCalendar.
+ * @param {Array} events - Array of event objects to display on the calendar.
+ * @param {function} onDateSelect - Callback function when a date range is selected.
+ * @param {function} onEventClick - Callback function when an event is clicked.
+ * @returns {JSX.Element} The AppointmentCalendar component.
  */
 const AppointmentCalendar = ({ events, onDateSelect, onEventClick }) => {
     const theme = useTheme();

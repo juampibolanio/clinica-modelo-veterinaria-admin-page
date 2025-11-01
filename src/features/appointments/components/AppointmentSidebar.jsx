@@ -6,6 +6,10 @@ import { appointmentStyles } from "../styles/appointment.styles";
 
 dayjs.locale("es");
 
+/**
+ * This component renders a sidebar showing today's and tomorrow's appointments.
+ * It allows viewing details of each appointment.
+ */
 const AppointmentSidebar = ({ todayList, tomorrowList, onView }) => {
     const renderList = (title, list) => (
         <Paper sx={appointmentStyles.paperCard}>

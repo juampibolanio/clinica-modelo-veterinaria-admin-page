@@ -64,7 +64,7 @@ const BlogFilters = React.memo(({ onChange }) => {
                     type="date"
                     label="Desde"
                     size="small"
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={filters.fromDate}
                     onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
                     sx={blogFiltersStyles.dateField}
@@ -74,7 +74,7 @@ const BlogFilters = React.memo(({ onChange }) => {
                     type="date"
                     label="Hasta"
                     size="small"
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={filters.toDate}
                     onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
                     sx={blogFiltersStyles.dateField}

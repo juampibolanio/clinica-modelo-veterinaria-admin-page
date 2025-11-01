@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
 import {
-    Grid,
     TextField,
     MenuItem,
     Stack,
     Button,
     CircularProgress,
     Typography,
+    Paper,
+    Box,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { getAllUsers } from "../../users/api/users.api";
@@ -23,9 +24,6 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    // ==============================
-    // State
-    // ==============================
     const [form, setForm] = useState({
         petId: "",
         veterinarianId: "",
@@ -39,9 +37,6 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
     const [histories, setHistories] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // ==============================
-    // Effects - Initialize form
-    // ==============================
     useEffect(() => {
         setForm((prev) => ({
             ...prev,
@@ -51,14 +46,10 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
         }));
     }, [initialValues, petId, user]);
 
-    // ==============================
-    // Effects - Load data
-    // ==============================
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-
                 const [usersRes, productsRes, historiesRes] = await Promise.all([
                     getAllUsers(),
                     getProducts(),
@@ -84,9 +75,6 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
         fetchData();
     }, [petId]);
 
-    // ==============================
-    // Handlers
-    // ==============================
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
@@ -104,10 +92,20 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
     // Render
     // ==============================
     return (
-        <form onSubmit={handleSubmit}>
-            <Grid container spacing={2}>
-                {/* Fecha */}
-                <Grid item xs={12} md={4}>
+        <Box
+            component={Paper}
+            sx={{
+                p: { xs: 2, sm: 3 },
+                borderRadius: 3,
+                bgcolor: "#FFFFFF",
+                boxShadow: "0 4px 12px rgba(55,129,227,0.08)",
+                maxWidth: 700,
+                mx: "auto",
+            }}
+        >
+            <form onSubmit={handleSubmit}>
+                <Stack spacing={2}>
+                    {/* Date */}
                     <TextField
                         type="date"
                         label="Fecha"
@@ -115,13 +113,11 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                         fullWidth
                         value={form.date}
                         onChange={handleChange}
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         required
                     />
-                </Grid>
 
-                {/* Producto (vacuna) */}
-                <Grid item xs={12} md={4}>
+                    {/* Vaccine */}
                     <TextField
                         select
                         label="Vacuna (producto)"
@@ -141,10 +137,8 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                             </MenuItem>
                         ))}
                     </TextField>
-                </Grid>
 
-                {/* Historia clínica */}
-                <Grid item xs={12} md={4}>
+                    {/* Clinical history */}
                     <TextField
                         select
                         label="Historia clínica"
@@ -164,10 +158,8 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                             </MenuItem>
                         ))}
                     </TextField>
-                </Grid>
 
-                {/* Veterinario */}
-                <Grid item xs={12} md={6}>
+                    {/* Veterinary */}
                     <TextField
                         select
                         label="Veterinario"
@@ -184,10 +176,8 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                             </MenuItem>
                         ))}
                     </TextField>
-                </Grid>
 
-                {/* Observaciones */}
-                <Grid item xs={12}>
+                    {/* Observations */}
                     <TextField
                         label="Observaciones"
                         name="observations"
@@ -195,18 +185,22 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                         value={form.observations || ""}
                         onChange={handleChange}
                         multiline
-                        minRows={2}
+                        minRows={3}
                     />
-                </Grid>
 
-                {/* Actions */}
-                <Grid item xs={12}>
-                    <Stack direction="row" justifyContent="flex-end" spacing={2}>
+                    {/* Buttons */}
+                    <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        justifyContent="flex-end"
+                        spacing={2}
+                        mt={2}
+                    >
                         <Button
                             variant="outlined"
                             color="secondary"
                             onClick={() => navigate(-1)}
                             disabled={saving}
+                            fullWidth={{ xs: true, sm: false }}
                         >
                             Cancelar
                         </Button>
@@ -214,6 +208,7 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                             type="submit"
                             variant="contained"
                             disabled={saving}
+                            fullWidth={{ xs: true, sm: false }}
                         >
                             {saving ? (
                                 <CircularProgress size={22} color="inherit" />
@@ -222,10 +217,9 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                             )}
                         </Button>
                     </Stack>
-                </Grid>
-            </Grid>
+                </Stack>
+            </form>
 
-            {/* Loader general */}
             {loading && (
                 <Stack alignItems="center" mt={3}>
                     <CircularProgress size={30} />
@@ -234,7 +228,7 @@ const AppliedVaccineForm = ({ initialValues, onSubmit, saving, petId }) => {
                     </Typography>
                 </Stack>
             )}
-        </form>
+        </Box>
     );
 };
 

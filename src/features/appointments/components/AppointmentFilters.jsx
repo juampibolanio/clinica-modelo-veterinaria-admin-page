@@ -2,6 +2,12 @@ import { Paper, Stack, TextField, MenuItem, Button, Typography } from "@mui/mate
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { appointmentStyles } from "../styles/appointment.styles";
 
+/**
+ * AppointmentFilters
+ * Component for filtering appointments based on various criteria.
+ * @param {object} filters - Current filter values.
+ * @param {function} setFilters - Function to update filter values.
+ */
 const AppointmentFilters = ({ filters, setFilters, vets, onApply }) => {
     const handleChange = (key, value) => {
         setFilters((f) => ({ ...f, [key]: value, page: 0 }));
@@ -55,7 +61,7 @@ const AppointmentFilters = ({ filters, setFilters, vets, onApply }) => {
                         size="small"
                         value={filters.fromDate || ""}
                         onChange={(e) => handleChange("fromDate", e.target.value)}
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                     />
                     <TextField
                         type="date"
@@ -63,7 +69,7 @@ const AppointmentFilters = ({ filters, setFilters, vets, onApply }) => {
                         size="small"
                         value={filters.toDate || ""}
                         onChange={(e) => handleChange("toDate", e.target.value)}
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                     />
 
                     <Button

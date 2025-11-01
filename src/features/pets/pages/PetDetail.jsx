@@ -223,8 +223,6 @@ const PetDetail = () => {
                 items={relatedPets.filter((p) => p.id !== pet.id)}
                 loading={loadingRelated}
                 emptyText="No hay otras mascotas registradas."
-                createLabel="Registrar nueva"
-                onCreate={() => navigate(`/pets/create?ownerId=${owner?.id}`)}
                 renderItem={(p) => (
                     <>
                         <Typography sx={{ minWidth: 160, fontWeight: 700 }}>{p.name}</Typography>

@@ -49,48 +49,6 @@ const UserList = () => {
             { field: "surname", headerName: "Apellido", flex: 1, minWidth: 120 },
             { field: "email", headerName: "Correo electrónico", flex: 1.3, minWidth: 200 },
             { field: "role", headerName: "Rol", flex: 0.8, minWidth: 100 },
-            {
-                field: "actions",
-                headerName: "Acciones",
-                sortable: false,
-                width: 180,
-                align: "center",
-                headerAlign: "center",
-                renderCell: (params) => (
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                        <Tooltip title="Ver" arrow>
-                            <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => navigate(`/security/${params.row.id}`)}
-                            >
-                                <VisibilityIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Editar" arrow>
-                            <IconButton
-                                size="small"
-                                color="secondary"
-                                onClick={() => navigate(`/security/edit/${params.row.id}`)}
-                            >
-                                <EditIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Eliminar" arrow>
-                            <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => {
-                                    setSelectedUser(params.row);
-                                    setConfirmOpen(true);
-                                }}
-                            >
-                                <DeleteIcon fontSize="small" />
-                            </IconButton>
-                        </Tooltip>
-                    </Stack>
-                ),
-            },
         ],
         [navigate, setConfirmOpen, setSelectedUser]
     );
@@ -172,32 +130,6 @@ const UserList = () => {
                                     <Typography sx={usersListStyles.mobileMetadata}>
                                         Rol: {u.role || "—"}
                                     </Typography>
-                                    <Stack direction="row" spacing={1} mt={1}>
-                                        <IconButton
-                                            color="primary"
-                                            onClick={() => navigate(`/security/${u.id}`)}
-                                            sx={usersListStyles.actionButton}
-                                        >
-                                            <VisibilityIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            color="secondary"
-                                            onClick={() => navigate(`/security/edit/${u.id}`)}
-                                            sx={usersListStyles.actionButton}
-                                        >
-                                            <EditIcon />
-                                        </IconButton>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => {
-                                                setSelectedUser(u);
-                                                setConfirmOpen(true);
-                                            }}
-                                            sx={usersListStyles.actionButton}
-                                        >
-                                            <DeleteIcon />
-                                        </IconButton>
-                                    </Stack>
                                 </Card>
                             ))
                         ) : (

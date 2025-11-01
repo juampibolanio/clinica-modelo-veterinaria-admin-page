@@ -22,6 +22,10 @@ const STATUS_OPTIONS = [
     { label: "Completado", value: "COMPLETED" },
 ];
 
+/**
+ * This component renders a form for creating or editing an appointment.
+ * It uses react-hook-form for form state management and validation with zod.
+ */
 const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
     const navigate = useNavigate();
     const { owners, vets, pets, setPets, loadingPreset } =
@@ -96,7 +100,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
             sx={appointmentFormStyles.form}
         >
             <Stack spacing={2}>
-                {/* Fecha */}
+                {/* Date */}
                 <TextField
                     label="Fecha"
                     type="date"
@@ -104,13 +108,13 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     {...register("date")}
                     error={!!errors.date}
                     helperText={errors.date?.message}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     inputProps={{ min: dayjs().format("YYYY-MM-DD") }}
                     required
                     sx={appointmentFormStyles.textField}
                 />
 
-                {/* Hora */}
+                {/* Hour */}
                 <TextField
                     label="Hora"
                     type="time"
@@ -123,7 +127,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     sx={appointmentFormStyles.textField}
                 />
 
-                {/* Estado */}
+                {/* State */}
                 <TextField
                     select
                     label="Estado"
@@ -140,7 +144,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     ))}
                 </TextField>
 
-                {/* Veterinario */}
+                {/* Veterinarian */}
                 <TextField
                     select
                     label="Veterinario"
@@ -158,7 +162,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     ))}
                 </TextField>
 
-                {/* Dueño */}
+                {/* Owner */}
                 <TextField
                     select
                     label="Dueño"
@@ -177,7 +181,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     ))}
                 </TextField>
 
-                {/* Mascota */}
+                {/* Pet */}
                 <TextField
                     select
                     label="Mascota"
@@ -196,7 +200,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     ))}
                 </TextField>
 
-                {/* Motivo */}
+                {/* Motive */}
                 <TextField
                     label="Motivo"
                     fullWidth
@@ -206,7 +210,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     sx={appointmentFormStyles.textField}
                 />
 
-                {/* Notas */}
+                {/* Notes */}
                 <TextField
                     label="Notas"
                     fullWidth
@@ -218,7 +222,7 @@ const AppointmentForm = ({ initialValues = {}, onSubmit, saving }) => {
                     sx={appointmentFormStyles.textField}
                 />
 
-                {/* Botones */}
+                {/* Buttons */}
                 <Stack sx={appointmentFormStyles.actionsContainer}>
                     <Button
                         variant="outlined"

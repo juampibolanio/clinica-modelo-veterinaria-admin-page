@@ -142,7 +142,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     value={form.consultationType || ""}
                     onChange={handleChange}
                     required
-                    InputLabelProps={{ shrink: true }}
+                    ={{ shrink: true }}
                     sx={clinicalHistoryFormStyles.textField}
                 >
                     {CONSULTATION_TYPES.map((t) => (
@@ -169,7 +169,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     name="date"
                     value={form.date || ""}
                     onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     required
                     sx={clinicalHistoryFormStyles.textField}
                 />
@@ -181,7 +181,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     name="diagnosis"
                     value={form.diagnosis || ""}
                     onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     sx={clinicalHistoryFormStyles.textField}
                 >
                     {COMMON_DIAGNOSES.map((d) => (
@@ -192,7 +192,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     <MenuItem value="Otro">Otro...</MenuItem>
                 </TextField>
 
-                {/* Diagnóstico personalizado */}
+                {/* diag */}
                 {form.diagnosis === "Otro" && (
                     <TextField
                         label="Especificar diagnóstico"
@@ -205,7 +205,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     />
                 )}
 
-                {/* Tratamiento */}
+                {/* treatemient */}
                 <TextField
                     label="Tratamiento"
                     name="treatment"
@@ -217,13 +217,13 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     sx={clinicalHistoryFormStyles.textField}
                 />
 
-                {/* Productos utilizados */}
+                {/* products */}
                 <TextField
                     select
                     label="Productos utilizados"
                     name="usedProductIds"
                     fullWidth
-                    InputLabelProps={{ shrink: true }}
+                    ={{ shrink: true }}
                     SelectProps={{
                         multiple: true,
                         renderValue: (selected) => (
@@ -260,7 +260,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     )}
                 </TextField>
 
-                {/* Observaciones */}
+                {/* Observations */}
                 <TextField
                     label="Observaciones"
                     name="observations"
@@ -272,7 +272,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     sx={clinicalHistoryFormStyles.textField}
                 />
 
-                {/* Veterinario */}
+                {/* Veterinarian */}
                 <TextField
                     select
                     label="Veterinario"
@@ -282,7 +282,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     onChange={handleChange}
                     required
                     disabled={loadingUsers}
-                    InputLabelProps={{ shrink: true }}
+                    slotProps={{ inputLabel: { shrink: true } }}
                     sx={clinicalHistoryFormStyles.textField}
                 >
                     {loadingUsers ? (
@@ -298,7 +298,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     )}
                 </TextField>
 
-                {/* ID Mascota */}
+                {/* ID pet */}
                 <TextField
                     label="ID Mascota"
                     name="petId"
@@ -311,7 +311,7 @@ const ClinicalHistoryForm = ({ initialValues = {}, onSubmit, saving }) => {
                     sx={clinicalHistoryFormStyles.textField}
                 />
 
-                {/* Botones */}
+                {/* buttons */}
                 <Stack sx={clinicalHistoryFormStyles.actionsContainer}>
                     <Button
                         variant="outlined"

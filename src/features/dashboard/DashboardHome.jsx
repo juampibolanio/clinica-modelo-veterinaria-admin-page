@@ -16,7 +16,6 @@ const DashboardHome = () => {
     const {
         appointments,
         weeklyAppointments,
-        lowStockProducts,
         stats,
         weather,
         loading,
@@ -34,7 +33,6 @@ const DashboardHome = () => {
             <DashboardGreeting user={user} weather={weather} />
             <DashboardTodayAppointments appointments={appointments} />
             <DashboardWeeklyAppointments weeklyAppointments={weeklyAppointments} />
-            <DashboardLowStock lowStockProducts={lowStockProducts} />
             <DashboardMonthlySummary stats={stats} />
         </Stack>
     );

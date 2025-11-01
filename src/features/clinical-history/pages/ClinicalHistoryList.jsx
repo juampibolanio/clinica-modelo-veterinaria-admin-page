@@ -194,7 +194,7 @@ const ClinicalHistoryList = () => {
                         type="date"
                         size="small"
                         label="Desde"
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         value={filters.fromDate}
                         onChange={(e) => setFilters((f) => ({ ...f, fromDate: e.target.value }))}
                         sx={clinicalHistoryListStyles.filterField}
@@ -204,7 +204,7 @@ const ClinicalHistoryList = () => {
                         type="date"
                         size="small"
                         label="Hasta"
-                        InputLabelProps={{ shrink: true }}
+                        slotProps={{ inputLabel: { shrink: true } }}
                         value={filters.toDate}
                         onChange={(e) => setFilters((f) => ({ ...f, toDate: e.target.value }))}
                         sx={clinicalHistoryListStyles.filterField}
@@ -316,7 +316,7 @@ const ClinicalHistoryList = () => {
                 title="Eliminar historia clínica"
                 message={
                     selectedItem
-                        ? `¿Seguro que deseas eliminar la historia clínica de ${selectedItem.petName || "la mascota seleccionada"}?`
+                        ? `¿Seguro que deseas eliminar la historia clínica de ${selectedItem.petName || "la mascota seleccionada"}? Se eliminarán todos los registros asociados a esta historia clínica (turnos, vacunas, etc).`
                         : "¿Confirmar eliminación?"
                 }
                 onClose={() => setConfirmOpen(false)}

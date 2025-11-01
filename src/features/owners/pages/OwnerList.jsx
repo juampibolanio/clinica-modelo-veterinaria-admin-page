@@ -253,7 +253,7 @@ const OwnerList = () => {
                 title="Eliminar dueño"
                 message={
                     selectedOwner
-                        ? `¿Seguro que deseas eliminar a ${selectedOwner.name} ${selectedOwner.surname}?`
+                        ? `¿Seguro que deseas eliminar a ${selectedOwner.name} ${selectedOwner.surname}? Se borrarán mascotas, turnos y todo registro asociado a este dueño.`
                         : "¿Confirmar eliminación?"
                 }
                 onClose={() => setConfirmOpen(false)}

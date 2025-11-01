@@ -11,8 +11,8 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 
 /**
- * SectionList — Lista seccional con header, botón y contenido.
- * Usado en: Detalle de Mascota, Dueños, etc.
+ * This component renders a section list with a header, optional create button,
+ * and a list of items. It handles loading and empty states.
  */
 export const SectionList = ({
     icon,
@@ -36,21 +36,30 @@ export const SectionList = ({
             width: "100%",
         }}
     >
-        {/* Encabezado */}
-        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-            {icon}
-            <Typography
-                variant="h6"
-                sx={{
-                    fontWeight: 700,
-                    color: "#212121",
-                    background: "linear-gradient(135deg, #3781E3 0%, #7027A0 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                }}
-            >
-                {title}
-            </Typography>
+        {/* Header */}
+        <Stack
+            direction={{ xs: "column", sm: "row" }}
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            justifyContent="space-between"
+            flexWrap="wrap"
+            mb={2}
+            gap={1}
+        >
+            <Stack direction="row" alignItems="center" spacing={1}>
+                {icon}
+                <Typography
+                    variant="h6"
+                    sx={{
+                        fontWeight: 700,
+                        color: "#212121",
+                        background: "linear-gradient(135deg, #3781E3 0%, #7027A0 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                    }}
+                >
+                    {title}
+                </Typography>
+            </Stack>
 
             {onCreate && (
                 <Button
@@ -58,12 +67,12 @@ export const SectionList = ({
                     variant="contained"
                     onClick={onCreate}
                     sx={{
-                        ml: "auto",
                         textTransform: "none",
                         fontWeight: 700,
                         borderRadius: 2,
                         px: 3,
                         py: 1,
+                        alignSelf: { xs: "flex-end", sm: "center" },
                         background: "linear-gradient(135deg, #3781E3 0%, #5a9aeb 100%)",
                         boxShadow: "0 3px 10px rgba(55,129,227,0.25)",
                         "&:hover": {
@@ -79,7 +88,7 @@ export const SectionList = ({
 
         <Divider sx={{ mb: 2, borderColor: "rgba(55,129,227,0.15)" }} />
 
-        {/* Contenido */}
+        {/* Content */}
         {loading ? (
             <Box display="flex" justifyContent="center" py={2}>
                 <CircularProgress size={28} />
